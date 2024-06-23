@@ -109,13 +109,13 @@
                 `;
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 5 seconds
-                }, 5000);  // 5 seconds cooldown
+                }, 3000);  // 5 seconds cooldown
             })
             .catch(error => {
                 console.error('Error:', error);
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 5 seconds even if there is an error
-                }, 5000);  // 5 seconds cooldown
+                }, 3000);  // 5 seconds cooldown
             });
         });
     </script>
