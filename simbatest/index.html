@@ -128,7 +128,6 @@
                             const audioElement = document.getElementById('audio');
                             audioElement.src = ttsData.url;
                             audioElement.style.display = 'block';
-                            audioElement.play();
                         } else {
                             alert('TTS Error: ' + ttsData.message);
                         }
@@ -138,13 +137,13 @@
                     });
                 }
                 setTimeout(() => {
-                    submitButton.disabled = false;  // Re-enable the submit button after 5 seconds
+                    submitButton.disabled = false;  // Re-enable the submit button after 2 seconds
                 }, 2000);  // 2 seconds cooldown
             })
             .catch(error => {
                 console.error('Error:', error);
                 setTimeout(() => {
-                    submitButton.disabled = false;  // Re-enable the submit button after 5 seconds even if there is an error
+                    submitButton.disabled = false;  // Re-enable the submit button after 2 seconds even if there is an error
                 }, 2000);  // 2 seconds cooldown
             });
         });
