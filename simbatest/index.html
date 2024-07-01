@@ -24,7 +24,6 @@
         }
         .form-group {
             margin: 20px 0;
-            /* color: red; */
         }
         input[type="text"], input[type="range"] {
             padding: 15px;
@@ -61,6 +60,10 @@
             font-size: 18px;
             color: #070707;
         }
+        audio {
+            margin-top: 20px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +83,7 @@
         </form>
         <div class="reminder">模型的温度越低，生成的信息会越可靠。</div> 
         <div class="result" id="result"></div>
+        <audio id="audio" controls style="display: none;"></audio>
     </div>
     <script>
         function updateTemperatureValue() {
@@ -105,18 +109,43 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('result').innerHTML = `
-                    <p>${data.answer}</p>
-                `;
+                if (data.answer) {
+                    document.getElementById('result').innerHTML = `<p>${data.answer}</p>`;
+                    // Call TTS API with the response
+                    fetch('http://127.0.0.1:9988/apitts', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            text: data.answer,
+                            language: 'zh-cn'
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(ttsData => {
+                        if (ttsData.code === 0) {
+                            const audioElement = document.getElementById('audio');
+                            audioElement.src = ttsData.url;
+                            audioElement.style.display = 'block';
+                            audioElement.play();
+                        } else {
+                            alert('TTS Error: ' + ttsData.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('TTS Error:', error);
+                    });
+                }
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 5 seconds
-                }, 2000);  // 5 seconds cooldown
+                }, 2000);  // 2 seconds cooldown
             })
             .catch(error => {
                 console.error('Error:', error);
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 5 seconds even if there is an error
-                }, 2000);  // 5 seconds cooldown
+                }, 2000);  // 2 seconds cooldown
             });
         });
     </script>
