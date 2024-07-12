@@ -24,7 +24,6 @@
         }
         .form-group {
             margin: 20px 0;
-            /* color: red; */
         }
         input[type="text"], input[type="range"] {
             padding: 15px;
@@ -61,6 +60,9 @@
             font-size: 18px;
             color: #070707;
         }
+        audio {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -78,8 +80,12 @@
                 <button type="submit" id="submitButton">提交</button>
             </div>
         </form>
-        <div class="reminder">模型的温度越低，生成的信息会越可靠。</div> 
+        <div class="reminder">模型的温度越低，生成的信息会越可靠。</div>
         <div class="result" id="result"></div>
+        <audio id="audioPlayer" controls style="display: none;">
+            <source id="audioSource" src="" type="audio/wav">
+            Your browser does not support the audio element.
+        </audio>
     </div>
     <script>
         function updateTemperatureValue() {
@@ -105,15 +111,39 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('result').innerHTML = `
-                    <p>${data.answer}</p>
-                `;
-                setTimeout(() => {
-                    submitButton.disabled = false;  // Re-enable the submit button after 5 seconds
-                }, 2000);  // 5 seconds cooldown
+                // Display the text result from the first API
+                document.getElementById('result').innerHTML = `<p>${data.answer}</p>`;
+
+                // Use the answer from the first API as input for the backend
+                fetch('http://127.0.0.1:5000/process_apitts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: data.answer, language: "zh" })
+                })
+                .then(response => response.json())
+                .then(audioData => {
+                    document.getElementById('result').innerHTML += `<p>${audioData.name}</p>`;
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    const audioSource = document.getElementById('audioSource');
+                    audioSource.src = audioData.url;
+                    audioPlayer.style.display = 'block';
+                    audioPlayer.load();
+                    audioPlayer.play();
+                    setTimeout(() => {
+                        submitButton.disabled = false;  // Re-enable the submit button after 5 seconds
+                    }, 2000);  // 5 seconds cooldown
+                })
+                .catch(error => {
+                    console.error('Error with second API:', error);
+                    setTimeout(() => {
+                        submitButton.disabled = false;  // Re-enable the submit button after 5 seconds even if there is an error
+                    }, 2000);  // 5 seconds cooldown
+                });
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error with first API:', error);
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 5 seconds even if there is an error
                 }, 2000);  // 5 seconds cooldown
