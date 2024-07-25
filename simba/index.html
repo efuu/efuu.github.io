@@ -61,6 +61,12 @@
             color: #a00003;
             color: #070707;
         }
+        .audio-controls {
+            margin-top: 20px;
+        }
+        .audio-controls button {
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +86,11 @@
         </form>
         <div class="reminder">模型的温度越低，生成的信息会越可靠。</div> 
         <div class="result" id="result"></div>
+        <div class="audio-controls" id="audioControls" style="display: none;">
+            <button id="playButton">播放</button>
+            <button id="pauseButton">暂停</button>
+            <button id="replayButton">重播</button>
+        </div>
     </div>
     <script>
         function updateTemperatureValue() {
@@ -94,7 +105,7 @@
             const submitButton = document.getElementById('submitButton');
             submitButton.disabled = true;  // Disable the submit button
 
-            fetch('https://simba-backend-eqq2.onrender.com/process', {  // backend
+            fetch('https://simba-backend-eqq2.onrender.com/process', {  
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -108,16 +119,29 @@
                 const audioBase64 = data.audio_base64;
                 const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
                 const audio = new Audio(audioUrl);
-                audio.play();
+                document.getElementById('audioControls').style.display = 'block';
+
+                document.getElementById('playButton').addEventListener('click', () => {
+                    audio.play();
+                });
+
+                document.getElementById('pauseButton').addEventListener('click', () => {
+                    audio.pause();
+                });
+
+                document.getElementById('replayButton').addEventListener('click', () => {
+                    audio.currentTime = 0;
+                    audio.play();
+                });
 
                 setTimeout(() => {
-                    submitButton.disabled = false;  //  2 seconds
+                    submitButton.disabled = false;  // Re-enable the submit button after 2 seconds
                 }, 2000);  // 2 seconds cooldown
             })
             .catch(error => {
                 console.error('Error:', error);
                 setTimeout(() => {
-                    submitButton.disabled = false;  //  2 seconds even if there is an error
+                    submitButton.disabled = false;  // Re-enable the submit button after 2 seconds even if there is an error
                 }, 2000);  // 2 seconds cooldown
             });
         });
