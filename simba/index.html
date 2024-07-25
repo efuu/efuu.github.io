@@ -93,6 +93,8 @@
         </div>
     </div>
     <script>
+        let audio = null;
+
         function updateTemperatureValue() {
             const temperature = document.getElementById('temperature').value;
             document.getElementById('temperatureValue').innerText = temperature;
@@ -105,7 +107,7 @@
             const submitButton = document.getElementById('submitButton');
             submitButton.disabled = true;  // Disable the submit button
 
-            fetch('https://simba-backend-eqq2.onrender.com/process', {  
+            fetch('https://simba-backend-eqq2.onrender.com/process', {  // Replace with your backend URL
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -118,21 +120,25 @@
                 
                 const audioBase64 = data.audio_base64;
                 const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
-                const audio = new Audio(audioUrl);
-                document.getElementById('audioControls').style.display = 'block';
 
-                document.getElementById('playButton').addEventListener('click', () => {
-                    audio.play();
-                });
-
-                document.getElementById('pauseButton').addEventListener('click', () => {
+                if (audio) {
                     audio.pause();
-                });
+                }
+                audio = new Audio(audioUrl);
 
-                document.getElementById('replayButton').addEventListener('click', () => {
-                    audio.currentTime = 0;
-                    audio.play();
-                });
+                const playButton = document.getElementById('playButton');
+                const pauseButton = document.getElementById('pauseButton');
+                const replayButton = document.getElementById('replayButton');
+
+                playButton.removeEventListener('click', playAudio);
+                pauseButton.removeEventListener('click', pauseAudio);
+                replayButton.removeEventListener('click', replayAudio);
+
+                playButton.addEventListener('click', playAudio);
+                pauseButton.addEventListener('click', pauseAudio);
+                replayButton.addEventListener('click', replayAudio);
+
+                document.getElementById('audioControls').style.display = 'block';
 
                 setTimeout(() => {
                     submitButton.disabled = false;  // Re-enable the submit button after 2 seconds
@@ -145,6 +151,25 @@
                 }, 2000);  // 2 seconds cooldown
             });
         });
+
+        function playAudio() {
+            if (audio) {
+                audio.play();
+            }
+        }
+
+        function pauseAudio() {
+            if (audio) {
+                audio.pause();
+            }
+        }
+
+        function replayAudio() {
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play();
+            }
+        }
     </script>
 </body>
 </html>
