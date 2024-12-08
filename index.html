@@ -4,11 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/> 
     <title>Haiku in the Middle</title>
+    <!-- EB Garamond from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: "Georgia", serif;
+            font-family: "EB Garamond", serif;
             background: linear-gradient(to bottom right, #f4f4f4, #cfcfcf);
             height: 100vh;
             display: flex;
@@ -21,23 +23,29 @@
             text-align: center;
             padding: 40px;
             background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
+            /* Removed the circle shape */
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
+            /* No fixed width or height, just let it size naturally */
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Red_rose.jpg/600px-Red_rose.jpg');
+            background-size: cover;
+            background-position: center;
         }
 
         .haiku-container p {
             margin: 10px 0;
-            font-size: 1.5rem;
+            font-size: 1rem;
             line-height: 1.4;
+            background: rgba(255,255,255,0.7);
+            padding: 5px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div class="haiku-container">
-        <p>In this world of ours,</p>
-        <p>We walk on the roof of Hell,</p>
-        <p>Gazing at the flowers.</p>
+        <p>in this world of ours,</p>
+        <p>we walk on the roof of hell,</p>
+        <p>gazing at the flowers.</p>
     </div>
 </body>
 </html>
