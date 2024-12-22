@@ -1,0 +1,94 @@
+body {
+    display: flex;
+    flex-direction: row;
+    font-family: 'Poppins', sans-serif;
+    background-color: #d6cfbf;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+}
+
+#side-menu {
+    width: 250px;
+    background-color: #4e4d49;
+    color: #d6cfbf;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#menu-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #e2c58d;
+}
+
+.bird-item {
+    font-size: 16px;
+    padding: 10px 15px;
+    margin: 5px 0;
+    text-align: center;
+    background-color: #725e45;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #ffffff;
+}
+
+.bird-item:hover {
+    background-color: #b7946a;
+}
+
+.bird-item.active {
+    background-color: #e2c58d;
+    color: #4e4d49;
+}
+
+#main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px;
+    background-color: #d6cfbf;
+}
+
+#play-button {
+    margin-bottom: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #d6cfbf;
+    background-color: #4e4d49;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+#play-button:hover {
+    background-color: #725e45;
+}
+
+#time-display {
+    font-size: 16px;
+    margin-top: 10px;
+    color: #4e4d49;
+}
+
+svg {
+    margin-top: 20px;
+}
+
+#bird-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4e4d49;
+    margin-bottom: 20px;
+}

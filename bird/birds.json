@@ -1,0 +1,5 @@
+[
+    { "title": "American Bushtit", "audio": "american-bushtit.wav", "data": "american-bushtit.json" },
+    { "title": "Lesser Goldfinch", "audio": "goldfinch.wav", "data": "goldfinch.json" },
+    { "title": "Mallard", "audio": "mallard.wav", "data": "mallard.json" }
+]
