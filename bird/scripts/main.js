@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let audio = new Audio();
     let isPlaying = false;
 
-    // concentric circles
+    // Add concentric circles
     for (let i = 1; i <= 5; i++) {
         svg.append("circle")
            .attr("cx", center.x)
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
            .attr("stroke-dasharray", "4,4");
     }
 
-    // radial lines
+    // Add radial lines
     for (let i = 0; i < 360; i += 30) {
         const angle = (i * Math.PI) / 180;
         svg.append("line")
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
            .attr("stroke-dasharray", "4,4");
     }
 
-    // background circle
+    // Add background circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
        .attr("fill", "#b7946a")
        .attr("opacity", 0.3);
 
-    // outer circle
+    // Add outer circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
@@ -48,14 +48,14 @@ document.addEventListener("DOMContentLoaded", () => {
        .attr("stroke", "#4e4d49")
        .attr("stroke-width", 5);
 
-    // center circle
+    // Add center circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
        .attr("r", 5)
        .attr("fill", "#d6cfbf");
 
-    // radius line
+    // Add the radius line
     const radiusLine = svg.append("line")
                           .attr("x1", center.x)
                           .attr("y1", center.y)
@@ -99,13 +99,19 @@ document.addEventListener("DOMContentLoaded", () => {
         svg.selectAll(".data-circle").remove();
 
         d3.json(jsonSrc).then(data => {
+            // Create scales for position, color, and drastic opacity
             const scaleRadius = d3.scaleLinear()
                                   .domain([0, d3.max(data, d => d.Frequency)])
                                   .range([0, radius]);
 
-            const scaleSize = d3.scaleLinear()
-                                .domain([0, d3.max(data, d => Math.max(0, d.Volume))])
-                                .range([2, 20]);
+            const scaleColor = d3.scaleLinear()
+                                 .domain([0, d3.max(data, d => Math.max(0, d.Volume))])
+                                 .range(["#87ceeb", "#f08080"]); // Light blue to light coral
+
+            const scaleOpacity = d3.scalePow()
+                                   .exponent(3) // Makes the opacity scale drastic
+                                   .domain([0, d3.max(data, d => Math.max(0, d.Volume))])
+                                   .range([0, 1]); // Fully transparent to fully opaque
 
             svg.selectAll(".data-circle")
                .data(data)
@@ -120,9 +126,9 @@ document.addEventListener("DOMContentLoaded", () => {
                    const angle = (d.Time / data[data.length - 1].Time) * 2 * Math.PI - Math.PI / 2;
                    return center.y + scaleRadius(d.Frequency) * Math.sin(angle);
                })
-               .attr("r", d => scaleSize(d.Volume))
-               .attr("fill", "#725e45")
-               .attr("opacity", 0.1);
+               .attr("r", 10) // Fixed size for all circles
+               .attr("fill", d => scaleColor(d.Volume)) // Set color based on volume
+               .attr("opacity", d => scaleOpacity(d.Volume)); // Set drastic opacity
 
             audio.addEventListener("timeupdate", updateTimeDisplay);
         });
@@ -158,7 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     audio.pause();
                 });
             });
-
 
             const firstBird = birds[0];
             loadBirdData(`audio/${firstBird.audio}`, `data/${firstBird.data}`, firstBird.title);
