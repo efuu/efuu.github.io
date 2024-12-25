@@ -92,3 +92,23 @@ svg {
     color: #4e4d49;
     margin-bottom: 20px;
 }
+
+.bird-toggle {
+    font-size: 14px;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background-color: #87ceeb;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.bird-toggle.active {
+    background-color: #f08080;
+}
+
+.bird-toggle:hover {
+    background-color: #4682b4;
+}

@@ -3,8 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const svg = d3.select("#wheel").attr("width", width).attr("height", height);
 
     const center = { x: width / 2, y: height / 2 };
-    let audio = new Audio();
+    const activeAudios = {}; // Store active audio instances
+    const activeData = {}; // Store active bird data
     let isPlaying = false;
+    const baseDuration = 8; // Fixed duration (8 seconds)
 
     // Add concentric circles
     for (let i = 1; i <= 5; i++) {
@@ -65,73 +67,106 @@ document.addEventListener("DOMContentLoaded", () => {
                           .attr("stroke-width", 3);
 
     const playButton = document.getElementById("play-button");
-    const birdTitle = document.getElementById("bird-title");
     const timeDisplay = document.getElementById("time-display");
 
-    const updateRadiusLine = () => {
-        const duration = audio.duration || 1;
-        const currentTime = audio.currentTime || 0;
-        const angle = (currentTime / duration) * 2 * Math.PI - Math.PI / 2;
+    const resetPlayback = () => {
+        isPlaying = false;
+        playButton.textContent = "Play";
+        Object.values(activeAudios).forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+        });
+        radiusLine.attr("x2", center.x).attr("y2", center.y - radius - 20);
+        timeDisplay.textContent = "Time: 0.0s";
+    };
 
+    const updateRadiusLine = () => {
+        if (!isPlaying || Object.keys(activeAudios).length === 0) return;
+
+        const audio = Object.values(activeAudios)[0];
+        const elapsedTime = audio.currentTime;
+
+        if (elapsedTime >= baseDuration) {
+            resetPlayback();
+            return;
+        }
+
+        const angle = (elapsedTime / baseDuration) * 2 * Math.PI - Math.PI / 2;
         const x2 = center.x + (radius + 20) * Math.cos(angle);
         const y2 = center.y + (radius + 20) * Math.sin(angle);
-
         radiusLine.attr("x2", x2).attr("y2", y2);
 
-        if (!audio.paused && !audio.ended) {
-            requestAnimationFrame(updateRadiusLine);
-        }
+        timeDisplay.textContent = `Time: ${elapsedTime.toFixed(1)}s`;
+
+        requestAnimationFrame(updateRadiusLine);
     };
 
-    const updateTimeDisplay = () => {
-        timeDisplay.textContent = `Time: ${audio.currentTime.toFixed(1)}s`;
-        updateRadiusLine();
-        if (audio.currentTime >= audio.duration) {
-            audio.currentTime = 0;
-            timeDisplay.textContent = "Time: 0.0s";
+    const toggleBirdVisualization = (bird, buttonElement) => {
+        const isActive = buttonElement.classList.contains("active");
+        const birdClass = bird.title.replace(/\s+/g, '-'); // Replace spaces with hyphens for unique class names
+
+        if (isActive) {
+            // Remove visualization and audio
+            svg.selectAll(`.data-circle-${birdClass}`).remove();
+            if (activeAudios[bird.title]) {
+                activeAudios[bird.title].pause();
+                delete activeAudios[bird.title];
+            }
+            buttonElement.classList.remove("active");
+        } else {
+            // Load bird data and add visualization
+            d3.json(`data/${bird.data}`).then(data => {
+                const adjustedData = data.filter(d => d.Time <= baseDuration) // Filter invalid times
+                                         .map(d => ({
+                                             ...d,
+                                             Time: d.Time % baseDuration // Loop times within baseDuration
+                                         }));
+
+                activeData[bird.title] = adjustedData;
+
+                const scaleRadius = d3.scaleLinear()
+                                      .domain([0, d3.max(adjustedData, d => d.Frequency)])
+                                      .range([0, radius]);
+
+                const scaleColor = d3.scaleLinear()
+                                     .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
+                                     .range(["#87ceeb", "#f08080"]);
+
+                const scaleOpacity = d3.scalePow()
+                                       .exponent(3)
+                                       .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
+                                       .range([0, 1]);
+
+                svg.selectAll(`.data-circle-${birdClass}`)
+                   .data(adjustedData)
+                   .enter()
+                   .append("circle")
+                   .attr("class", `data-circle-${birdClass}`)
+                   .attr("cx", d => {
+                       const angle = (d.Time / baseDuration) * 2 * Math.PI - Math.PI / 2;
+                       return center.x + scaleRadius(d.Frequency) * Math.cos(angle);
+                   })
+                   .attr("cy", d => {
+                       const angle = (d.Time / baseDuration) * 2 * Math.PI - Math.PI / 2;
+                       return center.y + scaleRadius(d.Frequency) * Math.sin(angle);
+                   })
+                   .attr("r", 10)
+                   .attr("fill", d => scaleColor(d.Volume))
+                   .attr("opacity", d => scaleOpacity(d.Volume));
+
+                // Add audio
+                const birdAudio = new Audio(`audio/${bird.audio}`);
+                birdAudio.loop = false;
+                birdAudio.currentTime = 0; // Start from the beginning
+                activeAudios[bird.title] = birdAudio;
+
+                if (isPlaying) {
+                    birdAudio.play();
+                }
+
+                buttonElement.classList.add("active");
+            });
         }
-    };
-
-    const loadBirdData = (audioSrc, jsonSrc, title) => {
-        birdTitle.textContent = title;
-        audio.src = audioSrc;
-
-        svg.selectAll(".data-circle").remove();
-
-        d3.json(jsonSrc).then(data => {
-            // Create scales for position, color, and drastic opacity
-            const scaleRadius = d3.scaleLinear()
-                                  .domain([0, d3.max(data, d => d.Frequency)])
-                                  .range([0, radius]);
-
-            const scaleColor = d3.scaleLinear()
-                                 .domain([0, d3.max(data, d => Math.max(0, d.Volume))])
-                                 .range(["#87ceeb", "#f08080"]); // Light blue to light coral
-
-            const scaleOpacity = d3.scalePow()
-                                   .exponent(3) // Makes the opacity scale drastic
-                                   .domain([0, d3.max(data, d => Math.max(0, d.Volume))])
-                                   .range([0, 1]); // Fully transparent to fully opaque
-
-            svg.selectAll(".data-circle")
-               .data(data)
-               .enter()
-               .append("circle")
-               .attr("class", "data-circle")
-               .attr("cx", d => {
-                   const angle = (d.Time / data[data.length - 1].Time) * 2 * Math.PI - Math.PI / 2;
-                   return center.x + scaleRadius(d.Frequency) * Math.cos(angle);
-               })
-               .attr("cy", d => {
-                   const angle = (d.Time / data[data.length - 1].Time) * 2 * Math.PI - Math.PI / 2;
-                   return center.y + scaleRadius(d.Frequency) * Math.sin(angle);
-               })
-               .attr("r", 10) // Fixed size for all circles
-               .attr("fill", d => scaleColor(d.Volume)) // Set color based on volume
-               .attr("opacity", d => scaleOpacity(d.Volume)); // Set drastic opacity
-
-            audio.addEventListener("timeupdate", updateTimeDisplay);
-        });
     };
 
     fetch("birds.json")
@@ -139,45 +174,27 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(birds => {
             const sideMenu = document.getElementById("side-menu");
 
-            birds.forEach((bird, index) => {
+            birds.forEach(bird => {
                 const birdItem = document.createElement("div");
                 birdItem.classList.add("bird-item");
-                if (index === 0) birdItem.classList.add("active");
                 birdItem.textContent = bird.title;
-                birdItem.dataset.audio = `audio/${bird.audio}`;
-                birdItem.dataset.json = `data/${bird.data}`;
-                birdItem.dataset.title = bird.title;
-
-                sideMenu.appendChild(birdItem);
 
                 birdItem.addEventListener("click", () => {
-                    document.querySelectorAll(".bird-item").forEach(i => i.classList.remove("active"));
-                    birdItem.classList.add("active");
-
-                    const audioSrc = birdItem.dataset.audio;
-                    const jsonSrc = birdItem.dataset.json;
-                    const title = birdItem.dataset.title;
-
-                    loadBirdData(audioSrc, jsonSrc, title);
-                    isPlaying = false;
-                    playButton.textContent = "Play";
-                    audio.pause();
+                    toggleBirdVisualization(bird, birdItem);
                 });
-            });
 
-            const firstBird = birds[0];
-            loadBirdData(`audio/${firstBird.audio}`, `data/${firstBird.data}`, firstBird.title);
+                sideMenu.appendChild(birdItem);
+            });
         });
 
     playButton.addEventListener("click", () => {
         if (isPlaying) {
-            audio.pause();
-            playButton.textContent = "Play";
+            resetPlayback();
         } else {
-            audio.play();
+            isPlaying = true;
+            Object.values(activeAudios).forEach(audio => audio.play());
             playButton.textContent = "Pause";
             updateRadiusLine();
         }
-        isPlaying = !isPlaying;
     });
 });
