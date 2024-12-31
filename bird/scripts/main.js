@@ -3,10 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const svg = d3.select("#wheel").attr("width", width).attr("height", height);
 
     const center = { x: width / 2, y: height / 2 };
-    const activeAudios = {}; // Store active audio instances
-    const activeData = {}; // Store active bird data
+    const activeAudios = {};
+    const activeData = {};
     let isPlaying = false;
-    const baseDuration = 8; // Fixed duration (8 seconds)
+    const baseDuration = 8;
 
     const birdImages = {
         "American Bushtit": "images/bushtit.jpg",
@@ -14,11 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
         "Mallard": "images/mallard.jpg",
     };
 
-    // Environment color palette
     const environmentColors = {
-        forest: "#A3D9A5", // Soft green for forest birds
-        grassland: "#FFE5A0", // Soft yellow for grassland birds
-        wetland: "#A5D8FF", // Soft blue for wetland birds
+        forest: ["#0C24F9", "#FAC300"],
+        grassland: ["#0CE6FA", "#FA6801"],
+        wetland: ["#0CFA50", "#FA0808"],
     };
 
     const birdEnvironments = {
@@ -27,24 +26,23 @@ document.addEventListener("DOMContentLoaded", () => {
         "Mallard": "wetland",
     };
 
-    const getEnvironmentColor = (birdName) => {
+    const getEnvironmentGradient = (birdName, value) => {
         const environment = birdEnvironments[birdName];
-        return environmentColors[environment] || "#CCCCCC"; // Default gray if no environment is assigned
+        const [startColor, endColor] = environmentColors[environment] || ["#CCCCCC", "#999999"];
+        return d3.interpolateRgb(startColor, endColor)(value);
     };
 
-    // Add concentric circles
     for (let i = 1; i <= 5; i++) {
         svg.append("circle")
            .attr("cx", center.x)
            .attr("cy", center.y)
            .attr("r", (radius / 5) * i)
            .attr("fill", "none")
-           .attr("stroke", "#b7946a")
+           .attr("stroke", "#463e34")
            .attr("stroke-opacity", 0.4)
            .attr("stroke-dasharray", "4,4");
     }
 
-    // Add radial lines
     for (let i = 0; i < 360; i += 30) {
         const angle = (i * Math.PI) / 180;
         svg.append("line")
@@ -52,20 +50,18 @@ document.addEventListener("DOMContentLoaded", () => {
            .attr("y1", center.y)
            .attr("x2", center.x + radius * Math.cos(angle))
            .attr("y2", center.y + radius * Math.sin(angle))
-           .attr("stroke", "#b7946a")
+           .attr("stroke", "#463e34")
            .attr("stroke-opacity", 0.4)
            .attr("stroke-dasharray", "4,4");
     }
 
-    // Add background circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
        .attr("r", radius)
-       .attr("fill", "#b7946a")
+       .attr("fill", "#f0f8ff")
        .attr("opacity", 0.3);
 
-    // Add outer circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
@@ -74,20 +70,18 @@ document.addEventListener("DOMContentLoaded", () => {
        .attr("stroke", "#4e4d49")
        .attr("stroke-width", 5);
 
-    // Add center circle
     svg.append("circle")
        .attr("cx", center.x)
        .attr("cy", center.y)
        .attr("r", 5)
        .attr("fill", "#d6cfbf");
 
-    // Add the radius line
     const radiusLine = svg.append("line")
                           .attr("x1", center.x)
                           .attr("y1", center.y)
                           .attr("x2", center.x)
                           .attr("y2", center.y - radius - 20)
-                          .attr("stroke", "#d6cfbf")
+                          .attr("stroke", "#FFA500")
                           .attr("stroke-width", 3);
 
     const playButton = document.getElementById("play-button");
@@ -118,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         timeDisplay.textContent = `Time: ${elapsedTime.toFixed(1)} / 8.0`;
 
         if (audio.currentTime >= baseDuration) {
-            resetPlayback(); // Stop playback after one loop
+            resetPlayback();
             return;
         }
 
@@ -127,25 +121,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const toggleBirdVisualization = (bird, buttonElement) => {
         const isActive = buttonElement.classList.contains("active");
-        const birdClass = bird.title.replace(/\s+/g, '-'); // Replace spaces with hyphens for unique class names
-        const birdColor = getEnvironmentColor(bird.title);
+        const birdClass = bird.title.replace(/\s+/g, '-');
 
         if (isActive) {
-            // Remove visualization and audio
             svg.selectAll(`.data-circle-${birdClass}`).remove();
             if (activeAudios[bird.title]) {
                 activeAudios[bird.title].pause();
                 delete activeAudios[bird.title];
             }
             buttonElement.classList.remove("active");
-            buttonElement.style.opacity = "0.5"; // Set to unselected
+            buttonElement.style.opacity = "0.5";
         } else {
-            // Load bird data and add visualization
             d3.json(`data/${bird.data}`).then(data => {
-                const adjustedData = data.filter(d => d.Time <= baseDuration) // Filter invalid times
+                const adjustedData = data.filter(d => d.Time <= baseDuration)
                                          .map(d => ({
                                              ...d,
-                                             Time: d.Time % baseDuration // Loop times within baseDuration
+                                             Time: d.Time % baseDuration
                                          }));
 
                 activeData[bird.title] = adjustedData;
@@ -154,14 +145,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                       .domain([0, d3.max(adjustedData, d => d.Frequency)])
                                       .range([0, radius]);
 
-                const scaleSize = d3.scalePow()
-                                    .exponent(3) // Drastic scaling
-                                    .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
-                                    .range([0, 25]); // Drastic size variation
+                const scaleColor = d3.scaleLinear()
+                                     .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
+                                     .range(environmentColors[birdEnvironments[bird.title]]);
 
-                const scaleOpacity = d3.scaleLinear()
+                const scaleOpacity = d3.scalePow()
+                                       .exponent(3)
                                        .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
-                                       .range([0, 1]); // Full range opacity
+                                       .range([0, 1]);
 
                 svg.selectAll(`.data-circle-${birdClass}`)
                    .data(adjustedData)
@@ -176,14 +167,13 @@ document.addEventListener("DOMContentLoaded", () => {
                        const angle = (d.Time / baseDuration) * 2 * Math.PI - Math.PI / 2;
                        return center.y + scaleRadius(d.Frequency) * Math.sin(angle);
                    })
-                   .attr("r", d => scaleSize(d.Volume))
-                   .attr("fill", birdColor)
-                   .attr("opacity", d => scaleOpacity(d.Volume)); // Opacity scales with volume
+                   .attr("r", 10)
+                   .attr("fill", d => scaleColor(d.Volume))
+                   .attr("opacity", d => scaleOpacity(d.Volume));
 
-                // Add audio
                 const birdAudio = new Audio(`audio/${bird.audio}`);
                 birdAudio.loop = false;
-                birdAudio.currentTime = 0; // Start from the beginning
+                birdAudio.currentTime = 0;
                 activeAudios[bird.title] = birdAudio;
 
                 if (isPlaying) {
@@ -191,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 buttonElement.classList.add("active");
-                buttonElement.style.opacity = "1"; // Set to selected
+                buttonElement.style.opacity = "1";
             });
         }
     };
@@ -199,10 +189,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const rightMenu = d3.select("body").append("div")
         .attr("id", "right-menu")
         .style("position", "absolute")
-        .style("right", "500px")
+        .style("right", "125px")
         .style("top", "250px")
         .style("width", "350px")
-        .style("background-color", "#f0ebd8")
+        .style("background-color", "#e3ecf5")
         .style("padding", "20px")
         .style("border-radius", "10px")
         .style("box-shadow", "0 4px 10px rgba(0, 0, 0, 0.1)");
@@ -235,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         .append("div")
                         .style("width", "30px")
                         .style("height", "30px")
-                        .style("background-color", environmentColors[environment])
+                        .style("background-color", environmentColors[environment][0])
                         .style("border-radius", "50%");
                 }
 
@@ -244,12 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     .style("display", "flex")
                     .style("align-items", "center")
                     .style("margin-top", "10px")
-                    .style("opacity", "0.5") // Start as unselected
+                    .style("opacity", "0.5")
                     .classed("bird-entry", true);
 
                 birdContainer
                     .append("img")
-                    .attr("src", birdImages[bird.title]) // Use bird's image
+                    .attr("src", birdImages[bird.title])
                     .attr("alt", `${bird.title} icon`)
                     .style("width", "50px")
                     .style("height", "50px")
