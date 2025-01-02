@@ -12,18 +12,21 @@ document.addEventListener("DOMContentLoaded", () => {
         "American Bushtit": "images/bushtit.jpg",
         "Lesser Goldfinch": "images/goldfinch.jpg",
         "Mallard": "images/mallard.jpg",
+        "Ruby-Throated Hummingbird": "images/ruby-throated-hummingbird.jpg",
     };
 
     const environmentColors = {
         forest: ["#0C24F9", "#FAC300"],
         grassland: ["#0CE6FA", "#FA6801"],
         wetland: ["#0CFA50", "#FA0808"],
+        flowerfield: ["#E800FA", "#74FA0C"],
     };
 
     const birdEnvironments = {
         "American Bushtit": "forest",
         "Lesser Goldfinch": "grassland",
         "Mallard": "wetland",
+        "Ruby-Throated Hummingbird": "flowerfield",
     };
 
     const getEnvironmentGradient = (birdName, value) => {
@@ -150,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                      .range(environmentColors[birdEnvironments[bird.title]]);
 
                 const scaleOpacity = d3.scalePow()
-                                       .exponent(3)
+                                       .exponent(4.5)
                                        .domain([0, d3.max(adjustedData, d => Math.max(0, d.Volume))])
                                        .range([0, 1]);
 
@@ -190,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .attr("id", "right-menu")
         .style("position", "absolute")
         .style("right", "125px")
-        .style("top", "250px")
+        .style("top", "200px")
         .style("width", "350px")
         .style("background-color", "#e3ecf5")
         .style("padding", "20px")
