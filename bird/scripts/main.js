@@ -19,14 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
         forest: ["#0C24F9", "#FAC300"],
         grassland: ["#0CE6FA", "#FA6801"],
         wetland: ["#0CFA50", "#FA0808"],
-        flowerfield: ["#E800FA", "#74FA0C"],
+        orchard: ["#E800FA", "#74FA0C"],
     };
 
     const birdEnvironments = {
         "American Bushtit": "forest",
         "Lesser Goldfinch": "grassland",
         "Mallard": "wetland",
-        "Ruby-Throated Hummingbird": "flowerfield",
+        "Ruby-Throated Hummingbird": "orchard",
     };
 
     const getEnvironmentGradient = (birdName, value) => {
