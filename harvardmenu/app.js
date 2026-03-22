@@ -1,4 +1,7 @@
-const API_BASE = 'https://api.cs50.io/dining';
+const RAW_API_BASE = 'https://api.cs50.io/dining';
+function getApiUrl(endpoint) {
+    return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(RAW_API_BASE + endpoint);
+}
 const ANNENBERG_ID = 30;
 
 // State
@@ -51,8 +54,8 @@ async function fetchDictionaries() {
 
     // Fetch from API
     const [catRes, recRes] = await Promise.all([
-        fetch(`${API_BASE}/categories`),
-        fetch(`${API_BASE}/recipes`)
+        fetch(getApiUrl('/categories')),
+        fetch(getApiUrl('/recipes'))
     ]);
 
     if (!catRes.ok || !recRes.ok) throw new Error('Failed to fetch dictionaries');
@@ -79,7 +82,7 @@ async function fetchMenu(mealId) {
     try {
         await fetchDictionaries();
 
-        const url = `${API_BASE}/menus?location=${ANNENBERG_ID}&meal=${mealId}`;
+        const url = getApiUrl(`/menus?location=${ANNENBERG_ID}&meal=${mealId}`);
         const res = await fetch(url);
         
         if (!res.ok) throw new Error('Failed to fetch menus');
