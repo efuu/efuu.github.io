@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HUDS Menu</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HUDS Menu">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts for modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <h1>Annenberg</h1>
+            <p id="date-display" class="date-subtitle">Loading...</p>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <!-- Tabs for Lunch / Dinner -->
+        <div class="meal-tabs">
+            <button class="tab-button active" data-meal="1">Lunch</button>
+            <button class="tab-button" data-meal="2">Dinner</button>
+        </div>
+
+        <div id="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Fetching today's menu...</p>
+        </div>
+
+        <div id="error" class="error-state hidden">
+            <p>Failed to load menu. Please check your connection.</p>
+            <button id="retry-btn" class="retry-btn">Retry</button>
+        </div>
+
+        <!-- Menu Content -->
+        <div id="menu-container" class="menu-container hidden">
+            <!-- Categories will be injected here by JS -->
+        </div>
+    </main>
+
+    <!-- Adding to home screen prompt (shown via CSS if needed, or just let users do it manually) -->
+    <div id="pwa-prompt" class="pwa-prompt hidden">
+        <p>To install, tap Share <span class="share-icon">↑</span> then "Add to Home Screen"</p>
+        <button id="close-prompt" class="close-btn">×</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
