@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>/list</title>
+<title>efuu</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap');
 
 *{margin:0;padding:0;box-sizing:border-box;cursor:none!important}
 
@@ -30,7 +29,7 @@ body{
 
 /* ── CURSOR DONUT ── */
 .donut-cursor{
-  position:fixed;pointer-events:none;z-index:9990;
+  position:fixed;pointer-events:none;z-index:999999;
   width:140px;height:140px;
   transform:translate(-50%,-50%);
   opacity:1;transition:opacity 0.15s;
@@ -46,7 +45,6 @@ body{
   border-bottom:4px solid #111;
 }
 .site-title{font-size:26px;font-weight:700;color:#111;letter-spacing:-0.03em}
-.site-title .jp{color:#bbb;font-family:'Noto Sans JP',sans-serif;font-size:15px;margin-left:8px}
 .header-right{display:flex;gap:10px;align-items:center;font-size:11px;color:#999}
 .header-right .clock{color:#111;font-weight:700}
 
@@ -372,6 +370,56 @@ body.admin-on .item-admin{display:flex}
 @keyframes soft-blink{0%,100%{opacity:0.5}50%{opacity:0.12}}
 .soft-blink{animation:soft-blink 2.5s ease-in-out infinite}
 
+/* ── LOGIN GATE ── */
+.login-gate{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#fff;z-index:99999;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+.login-gate.hidden{display:none}
+.login-box{
+  width:380px;max-width:90vw;text-align:center;
+}
+.login-box .gate-title{
+  font-size:42px;font-weight:700;color:#111;
+  letter-spacing:-0.04em;margin-bottom:4px;
+}
+.login-box .gate-sub{
+  font-size:10px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2rem;
+}
+.gate-tabs{
+  display:flex;gap:0;margin-bottom:1.2rem;border-bottom:3px solid #111;
+}
+.gate-tab{
+  flex:1;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+  padding:10px;background:none;border:none;
+  color:#bbb;letter-spacing:0.1em;text-transform:uppercase;
+  transition:all 0.1s;
+}
+.gate-tab:hover{color:#666}
+.gate-tab.active{color:#fff;background:#111}
+.gate-form{display:none}
+.gate-form.active{display:block}
+.gate-form input{
+  width:100%;font-family:'Space Mono',monospace;font-size:12px;
+  background:#fafafa;border:3px solid #ddd;
+  color:#111;padding:10px 14px;outline:none;margin-bottom:8px;
+  text-align:center;
+}
+.gate-form input:focus{border-color:#111}
+.gate-form .gate-btn{
+  width:100%;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
+  padding:10px;border:3px solid #111;background:#111;color:#fff;
+  letter-spacing:0.1em;text-transform:uppercase;
+  transition:all 0.1s;margin-top:4px;
+}
+.gate-form .gate-btn:hover{background:#333}
+.gate-err{
+  color:#c00;font-size:10px;margin-top:0.8rem;
+  min-height:1.2em;letter-spacing:0.05em;
+}
+
 /* ── MOBILE ── */
 @media(max-width:700px){
   .donut-cursor{display:none}
@@ -380,8 +428,31 @@ body.admin-on .item-admin{display:flex}
   .blocks-canvas{display:flex;flex-direction:column;gap:8px;min-height:auto;padding:6px}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- LOGIN GATE -->
+<div class="login-gate" id="login-gate">
+  <div class="login-box">
+    <div class="gate-title">efuu</div>
+    <div class="gate-tabs">
+      <button class="gate-tab active" id="gt-view" onclick="gateTab('view')">VIEW</button>
+      <button class="gate-tab" id="gt-admin" onclick="gateTab('admin')">ADMIN</button>
+    </div>
+    <div class="gate-form active" id="gf-view">
+      <input type="password" id="gate-pw" placeholder="passphrase" autocomplete="off">
+      <button class="gate-btn" id="gate-enter-btn">ENTER</button>
+    </div>
+    <div class="gate-form" id="gf-admin">
+      <input type="email" id="gate-email" placeholder="email" autocomplete="email">
+      <input type="password" id="gate-adminpw" placeholder="password" autocomplete="current-password">
+      <button class="gate-btn" id="gate-signin-btn">SIGN IN</button>
+      <button class="gate-btn" id="gate-signup-btn" style="background:none;color:#111;margin-top:4px">SIGN UP</button>
+    </div>
+    <div class="gate-err" id="gate-err"></div>
+  </div>
+</div>
 
 <div class="scanlines"></div>
 <canvas class="donut-cursor" id="donut"></canvas>
@@ -390,21 +461,24 @@ body.admin-on .item-admin{display:flex}
 <div class="admin-overlay" id="admin">
   <div class="admin-panel">
     <div class="pw-prompt" id="pw-gate">
-      <h2>認証 // auth</h2>
+      <h2>AUTH</h2>
       <div id="pw-mode-text" style="color:#999;font-size:9px;margin-bottom:1rem"></div>
+      <input type="email" id="pw-email" placeholder="email" autocomplete="email" style="margin-bottom:8px;display:none">
       <input type="password" id="pw-input" placeholder="••••••" autocomplete="off">
-      <div class="pw-err" id="pw-err">ACCESS DENIED</div>
+      <div class="pw-err" id="pw-err"></div>
       <div class="pw-setup" id="pw-setup"></div>
       <div class="admin-btns" style="justify-content:center;margin-top:1rem">
-        <button class="admin-btn" id="pw-submit-btn">認証</button>
-        <button class="admin-btn close" onclick="closeAdmin()">取消</button>
+        <button class="admin-btn" id="pw-submit-btn">SIGN IN</button>
+        <button class="admin-btn" id="pw-signup-btn" style="border-color:#ccc;color:#999;display:none">SIGN UP</button>
+        <button class="admin-btn close" onclick="closeAdmin()">CANCEL</button>
       </div>
     </div>
     <div id="admin-main" style="display:none">
-      <h2 id="admin-panel-title">// 制御盤 control</h2>
+      <h2 id="admin-panel-title">CONTROL</h2>
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="adminTab('item',this)">+ ITEM</button>
         <button class="admin-tab" onclick="adminTab('quote',this)">+ QUOTE</button>
+        <button class="admin-tab" onclick="adminTab('site',this)">SITE</button>
       </div>
       <div class="admin-form active" id="form-item">
         <label>type</label>
@@ -418,26 +492,35 @@ body.admin-on .item-admin{display:flex}
         <label>status</label>
         <select id="a-status"><option>done</option><option>reading</option><option>watching</option><option>up next</option><option>dropped</option></select>
         <div class="admin-btns">
-          <button class="admin-btn" id="item-submit-btn" onclick="addItem()">追加 ADD</button>
-          <button class="admin-btn close" onclick="closeAdmin()">閉じる</button>
+          <button class="admin-btn" id="item-submit-btn" onclick="addItem()">ADD</button>
+          <button class="admin-btn close" onclick="closeAdmin()">CLOSE</button>
         </div>
       </div>
       <div class="admin-form" id="form-quote">
         <label>quote</label><textarea id="a-quote" rows="3"></textarea>
         <label>source</label><input id="a-qsrc" placeholder="who said it">
         <div class="admin-btns">
-          <button class="admin-btn" id="quote-submit-btn" onclick="addQuote()">追加 ADD</button>
-          <button class="admin-btn close" onclick="closeAdmin()">閉じる</button>
+          <button class="admin-btn" id="quote-submit-btn" onclick="addQuote()">ADD</button>
+          <button class="admin-btn close" onclick="closeAdmin()">CLOSE</button>
         </div>
       </div>
-      <div class="admin-msg" id="admin-msg">追加完了</div>
+      <div class="admin-form" id="form-site">
+        <label>viewer passphrase</label>
+        <input id="a-viewerpw" type="text" placeholder="new passphrase for viewers">
+        <div style="font-size:9px;color:#999;margin:4px 0 12px">anyone with this passphrase can view your collection</div>
+        <div class="admin-btns">
+          <button class="admin-btn" onclick="saveViewerPw()">UPDATE</button>
+          <button class="admin-btn close" onclick="closeAdmin()">CLOSE</button>
+        </div>
+      </div>
+      <div class="admin-msg" id="admin-msg">SAVED</div>
     </div>
   </div>
 </div>
 
 <!-- HEADER -->
 <div class="header">
-  <div class="site-title">/list<span class="jp">リスト</span></div>
+  <div class="site-title">efuu</div>
   <div class="header-right">
     <button class="hdr-btn" id="admin-toggle" onclick="toggleAdminMode()">ADMIN</button>
     <button class="hdr-btn" onclick="resetLayout()">RESET</button>
@@ -458,16 +541,32 @@ body.admin-on .item-admin{display:flex}
 <!-- STATUS BAR -->
 <div class="status-bar">
   <span id="st-left"></span>
-  <span class="soft-blink">工事中 // under construction</span>
+  <span class="soft-blink">efuu</span>
   <span id="st-right"></span>
 </div>
 
 <script>
 // ╔══════════════════════════════════════╗
-// ║   YOUR STUFF                        ║
+// ║   SUPABASE CONFIG                   ║
+// ║   1. Create free project at         ║
+// ║      supabase.com                   ║
+// ║   2. Run supabase-setup.sql         ║
+// ║   3. Paste URL + key below          ║
 // ╚══════════════════════════════════════╝
 
-const ITEMS = [
+const SUPABASE_URL = 'https://llcpgdapzcumrqujzznr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsY3BnZGFwemN1bXJxdWp6em5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDg1MzUsImV4cCI6MjA4OTc4NDUzNX0.vnjR_ELd1zdXHRCL80M5a47AlSS32dEaOD4T1_4Xus4';
+const USE_DB = SUPABASE_URL !== 'YOUR_PROJECT_URL';
+const db = USE_DB ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// ── DB ↔ FRONTEND MAPPING ──
+function dbToItem(r){return{id:r.id,type:r.type,tag:r.tag||null,title:r.title,url:r.url||undefined,desc:r.description||'',rating:r.rating,status:r.status,dateAdded:r.date_added}}
+function itemToDb(i){return{type:i.type,tag:i.tag||null,title:i.title,url:i.url||null,description:i.desc||'',rating:i.rating,status:i.status,date_added:i.dateAdded}}
+function dbToQuote(r){return{id:r.id,text:r.text,src:r.source||''}}
+function quoteToDb(q){return{text:q.text,source:q.src||''}}
+
+// ── FALLBACK DATA (used when Supabase not configured) ──
+const FALLBACK_ITEMS = [
   {type:"link",tag:"clip",title:"sample clip — replace me",url:"https://example.com",desc:"why you saved this",rating:null,status:"done",dateAdded:"2025-12-01"},
   {type:"book",title:"sample book title",desc:"your review",rating:8,status:"done",dateAdded:"2025-11-15"},
   {type:"book",title:"currently reading this one",desc:"thoughts so far",rating:null,status:"reading",dateAdded:"2026-01-20"},
@@ -477,8 +576,7 @@ const ITEMS = [
   {type:"link",tag:"misc",title:"cool thing i found",url:"https://example.com",desc:"worth saving",rating:null,status:"done",dateAdded:"2026-01-05"},
   {type:"link",tag:"clip",title:"another clip placeholder",url:"https://example.com",desc:"",rating:7,status:"done",dateAdded:"2025-12-20"},
 ];
-
-const QUOTES = [
+const FALLBACK_QUOTES = [
   {text:"the future is already here — it's just not evenly distributed",src:"gibson"},
   {text:"we are all just prisoners here, of our own device",src:""},
   {text:"i think therefore i am dangerous",src:""},
@@ -523,24 +621,38 @@ const CATEGORIES = [
 // ╚══════════════════════════════════════╝
 
 // ── DATA ──
-let allItems=[...ITEMS];
-let allQuotes=[...QUOTES];
-(function(){
-  const si=localStorage.getItem('listAllItems');if(si)allItems=JSON.parse(si);
-  const sq=localStorage.getItem('listAllQuotes');if(sq)allQuotes=JSON.parse(sq);
-  // migrate old clip type → link type with tag:"clip"
-  let migrated=false;
-  allItems.forEach(i=>{if(i.type==='clip'){i.type='link';i.tag=i.tag||'clip';migrated=true}});
-  if(migrated)localStorage.setItem('listAllItems',JSON.stringify(allItems));
-})();
+let allItems=[];
+let allQuotes=[];
+
+async function loadData(){
+  if(USE_DB){
+    const{data:items}=await db.from('items').select('*').order('created_at',{ascending:false});
+    const{data:quotes}=await db.from('quotes').select('*').order('created_at',{ascending:false});
+    if(items)allItems=items.map(dbToItem);
+    if(quotes)allQuotes=quotes.map(dbToQuote);
+  }else{
+    // fallback: localStorage or hardcoded
+    allItems=[...FALLBACK_ITEMS];allQuotes=[...FALLBACK_QUOTES];
+    const si=localStorage.getItem('listAllItems');if(si)allItems=JSON.parse(si);
+    const sq=localStorage.getItem('listAllQuotes');if(sq)allQuotes=JSON.parse(sq);
+    let migrated=false;
+    allItems.forEach(i=>{if(i.type==='clip'){i.type='link';i.tag=i.tag||'clip';migrated=true}});
+    if(migrated)localStorage.setItem('listAllItems',JSON.stringify(allItems));
+  }
+}
 
 let adminMode=false,adminAuthenticated=false,editingIdx=null;
 
 // ── BLOCK STATE ──
-let blockExpanded=JSON.parse(localStorage.getItem('listBlkExp')||'{}');
-// default: all expanded
-CATEGORIES.forEach(c=>{if(blockExpanded[c.key]===undefined)blockExpanded[c.key]=true});
-function saveExp(){localStorage.setItem('listBlkExp',JSON.stringify(blockExpanded))}
+let blockExpanded={};
+CATEGORIES.forEach(c=>{blockExpanded[c.key]=true});
+let _expSaveTimer=null;
+function saveExp(){
+  if(USE_DB){
+    clearTimeout(_expSaveTimer);
+    _expSaveTimer=setTimeout(()=>{db.from('site_settings').upsert({key:'block_expanded',value:JSON.stringify(blockExpanded)})},500);
+  }else localStorage.setItem('listBlkExp',JSON.stringify(blockExpanded));
+}
 
 let fullscreenKey=null;
 
@@ -548,8 +660,14 @@ let blockSorts={};let blockSortDirs={};
 CATEGORIES.forEach(c=>{blockSorts[c.key]='default';blockSortDirs[c.key]=-1});
 
 // ── BLOCK POSITIONS ── {key: {x,y,w,h}}
-let blockPos=JSON.parse(localStorage.getItem('listBlkPos')||'{}');
-function savePos(){localStorage.setItem('listBlkPos',JSON.stringify(blockPos))}
+let blockPos={};
+let _posSaveTimer=null;
+function savePos(){
+  if(USE_DB){
+    clearTimeout(_posSaveTimer);
+    _posSaveTimer=setTimeout(()=>{db.from('site_settings').upsert({key:'block_positions',value:JSON.stringify(blockPos)})},500);
+  }else localStorage.setItem('listBlkPos',JSON.stringify(blockPos));
+}
 
 function toggleFullscreen(key){
   if(fullscreenKey===key){fullscreenKey=null}else{fullscreenKey=key}
@@ -563,12 +681,14 @@ document.getElementById('fs-backdrop').addEventListener('click',()=>{
 });
 
 // ── VISITOR COUNTER ──
-let visits=parseInt(localStorage.getItem('listVisits')||'0')+1;
-localStorage.setItem('listVisits',''+visits);
-const vcEl=document.getElementById('visitor-counter');
-String(visits).padStart(6,'0').split('').forEach(d=>{
-  const s=document.createElement('span');s.className='vc-digit';s.textContent=d;vcEl.appendChild(s);
-});
+let visits=0;
+function renderVisitCounter(){
+  const vcEl=document.getElementById('visitor-counter');
+  vcEl.innerHTML='';
+  String(visits).padStart(6,'0').split('').forEach(d=>{
+    const s=document.createElement('span');s.className='vc-digit';s.textContent=d;vcEl.appendChild(s);
+  });
+}
 
 // ── CLOCK ──
 function updateClock(){
@@ -924,13 +1044,14 @@ function setupResize(el,handle,key){
 }
 
 // ══════════════════════════════
-//  AUTH
+//  AUTH (Supabase or SHA-256 fallback)
 // ══════════════════════════════
+
+// SHA-256 fallback (when Supabase not configured)
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-const storedHash=localStorage.getItem('listPwHash');
 
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();toggleAdminMode()}
@@ -942,6 +1063,7 @@ document.addEventListener('keydown',e=>{
 });
 
 let authCallback=null;
+let authIsSignUp=false;
 
 function toggleAdminMode(){
   if(!adminMode){
@@ -962,26 +1084,88 @@ function disableAdminMode(){
   render();
 }
 
+function showAuthErr(msg){
+  const el=document.getElementById('pw-err');
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
 function openAuthGate(cb){
   authCallback=cb;
+  authIsSignUp=false;
   document.getElementById('admin').classList.add('open');
   document.getElementById('pw-gate').style.display='';
   document.getElementById('admin-main').style.display='none';
   document.getElementById('pw-input').value='';
   document.getElementById('pw-err').style.display='none';
-  if(!storedHash){
-    document.getElementById('pw-mode-text').textContent='create your access key (first time)';
-    document.getElementById('pw-setup').textContent='hashed — never stored in plaintext';
-    document.getElementById('pw-submit-btn').textContent='SET';
-    document.getElementById('pw-submit-btn').onclick=setupPw;
-  }else{
-    document.getElementById('pw-mode-text').textContent='enter access key';
+
+  if(USE_DB){
+    // Supabase auth mode
+    document.getElementById('pw-email').style.display='';
+    document.getElementById('pw-email').value='';
+    document.getElementById('pw-signup-btn').style.display='';
+    document.getElementById('pw-mode-text').textContent='sign in to manage your collection';
     document.getElementById('pw-setup').textContent='';
-    document.getElementById('pw-submit-btn').textContent='認証';
-    document.getElementById('pw-submit-btn').onclick=checkPw;
+    document.getElementById('pw-submit-btn').textContent='SIGN IN';
+    document.getElementById('pw-submit-btn').onclick=doSupabaseSignIn;
+    document.getElementById('pw-signup-btn').textContent='SIGN UP';
+    document.getElementById('pw-signup-btn').onclick=doSupabaseSignUp;
+    setTimeout(()=>document.getElementById('pw-email').focus(),100);
+  }else{
+    // localStorage fallback
+    document.getElementById('pw-email').style.display='none';
+    document.getElementById('pw-signup-btn').style.display='none';
+    const storedHash=localStorage.getItem('listPwHash');
+    if(!storedHash){
+      document.getElementById('pw-mode-text').textContent='create your access key (first time)';
+      document.getElementById('pw-setup').textContent='hashed locally — never stored in plaintext';
+      document.getElementById('pw-submit-btn').textContent='SET';
+      document.getElementById('pw-submit-btn').onclick=setupPwLocal;
+    }else{
+      document.getElementById('pw-mode-text').textContent='enter access key';
+      document.getElementById('pw-setup').textContent='';
+      document.getElementById('pw-submit-btn').textContent='AUTH';
+      document.getElementById('pw-submit-btn').onclick=checkPwLocal;
+    }
+    setTimeout(()=>document.getElementById('pw-input').focus(),100);
   }
-  setTimeout(()=>document.getElementById('pw-input').focus(),100);
 }
+
+// ── Supabase Auth ──
+async function doSupabaseSignIn(){
+  const email=document.getElementById('pw-email').value.trim();
+  const pw=document.getElementById('pw-input').value;
+  if(!email||!pw)return showAuthErr('enter email + password');
+  const{error}=await db.auth.signInWithPassword({email,password:pw});
+  if(error)return showAuthErr(error.message);
+  document.getElementById('admin').classList.remove('open');
+  if(authCallback){authCallback();authCallback=null}
+}
+async function doSupabaseSignUp(){
+  const email=document.getElementById('pw-email').value.trim();
+  const pw=document.getElementById('pw-input').value;
+  if(!email||pw.length<6)return showAuthErr('need email + 6+ char password');
+  const{error}=await db.auth.signUp({email,password:pw});
+  if(error)return showAuthErr(error.message);
+  document.getElementById('admin').classList.remove('open');
+  if(authCallback){authCallback();authCallback=null}
+}
+
+// ── localStorage fallback Auth ──
+async function setupPwLocal(){
+  const pw=document.getElementById('pw-input').value;if(pw.length<2)return;
+  localStorage.setItem('listPwHash',await sha256(pw));
+  document.getElementById('admin').classList.remove('open');
+  if(authCallback){authCallback();authCallback=null}
+}
+async function checkPwLocal(){
+  const hash=await sha256(document.getElementById('pw-input').value);
+  if(hash===localStorage.getItem('listPwHash')){
+    document.getElementById('admin').classList.remove('open');
+    if(authCallback){authCallback();authCallback=null}
+  }else showAuthErr('ACCESS DENIED');
+}
+
 function openAdmin(){
   document.getElementById('admin').classList.add('open');
   document.getElementById('pw-gate').style.display='none';
@@ -990,40 +1174,28 @@ function openAdmin(){
 function closeAdmin(){
   document.getElementById('admin').classList.remove('open');
   editingIdx=null;
-  document.getElementById('admin-panel-title').textContent='// 制御盤 control';
-  document.getElementById('item-submit-btn').textContent='追加 ADD';
+  document.getElementById('admin-panel-title').textContent='CONTROL';
+  document.getElementById('item-submit-btn').textContent='ADD';
   document.getElementById('item-submit-btn').onclick=()=>addItem();
-  document.getElementById('quote-submit-btn').textContent='追加 ADD';
+  document.getElementById('quote-submit-btn').textContent='ADD';
   document.getElementById('quote-submit-btn').onclick=()=>addQuote();
 }
+
+// Enter key in auth forms
 document.getElementById('pw-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){if(!storedHash)setupPw();else checkPw()}
-});
-async function setupPw(){
-  const pw=document.getElementById('pw-input').value;if(pw.length<2)return;
-  localStorage.setItem('listPwHash',await sha256(pw));
-  document.getElementById('admin').classList.remove('open');
-  if(authCallback){authCallback();authCallback=null}
-}
-async function checkPw(){
-  const hash=await sha256(document.getElementById('pw-input').value);
-  if(hash===localStorage.getItem('listPwHash')){
-    document.getElementById('admin').classList.remove('open');
-    if(authCallback){authCallback();authCallback=null}
-  }else{
-    document.getElementById('pw-err').style.display='block';
-    document.getElementById('pw-input').value='';
-    setTimeout(()=>document.getElementById('pw-err').style.display='none',2000);
+  if(e.key==='Enter'){
+    if(USE_DB)doSupabaseSignIn();
+    else{const h=localStorage.getItem('listPwHash');if(!h)setupPwLocal();else checkPwLocal()}
   }
-}
+});
 
 // ── ADMIN FORM ──
 function openAdminForm(tab){
   editingIdx=null;
-  document.getElementById('admin-panel-title').textContent='// 制御盤 control';
-  document.getElementById('item-submit-btn').textContent='追加 ADD';
+  document.getElementById('admin-panel-title').textContent='CONTROL';
+  document.getElementById('item-submit-btn').textContent='ADD';
   document.getElementById('item-submit-btn').onclick=()=>addItem();
-  document.getElementById('quote-submit-btn').textContent='追加 ADD';
+  document.getElementById('quote-submit-btn').textContent='ADD';
   document.getElementById('quote-submit-btn').onclick=()=>addQuote();
   openAdmin();
   const tabs=document.querySelectorAll('.admin-tab');
@@ -1039,7 +1211,7 @@ function openAdminForm(tab){
 function openEditForm(kind,idx){
   if(kind==='item'){
     const item=allItems[idx];
-    document.getElementById('admin-panel-title').textContent='// 編集 EDIT';
+    document.getElementById('admin-panel-title').textContent='EDIT';
     openAdmin();
     const tabs=document.querySelectorAll('.admin-tab');
     tabs.forEach(t=>t.classList.remove('active'));
@@ -1053,11 +1225,11 @@ function openEditForm(kind,idx){
     document.getElementById('a-rating').value=item.rating!=null?item.rating:'';
     document.getElementById('a-status').value=item.status||'done';
     editingIdx={kind:'item',idx};
-    document.getElementById('item-submit-btn').textContent='保存 SAVE';
+    document.getElementById('item-submit-btn').textContent='SAVE';
     document.getElementById('item-submit-btn').onclick=()=>saveEdit();
   }else{
     const q=allQuotes[idx];
-    document.getElementById('admin-panel-title').textContent='// 編集 EDIT';
+    document.getElementById('admin-panel-title').textContent='EDIT';
     openAdmin();
     const tabs=document.querySelectorAll('.admin-tab');
     tabs.forEach(t=>t.classList.remove('active'));
@@ -1066,31 +1238,58 @@ function openEditForm(kind,idx){
     document.getElementById('a-quote').value=q.text||'';
     document.getElementById('a-qsrc').value=q.src||'';
     editingIdx={kind:'quote',idx};
-    document.getElementById('quote-submit-btn').textContent='保存 SAVE';
+    document.getElementById('quote-submit-btn').textContent='SAVE';
     document.getElementById('quote-submit-btn').onclick=()=>saveEdit();
   }
 }
 
-function saveEdit(){
+async function saveEdit(){
   if(!editingIdx)return;
   if(editingIdx.kind==='item'){
     const type=document.getElementById('a-type').value;
-    const item={type,title:document.getElementById('a-title').value.trim(),url:document.getElementById('a-url').value.trim()||undefined,desc:document.getElementById('a-desc').value.trim(),rating:document.getElementById('a-rating').value?Number(document.getElementById('a-rating').value):null,status:document.getElementById('a-status').value};
+    const item={type,title:document.getElementById('a-title').value.trim(),url:document.getElementById('a-url').value.trim()||undefined,desc:document.getElementById('a-desc').value.trim(),rating:document.getElementById('a-rating').value?Number(document.getElementById('a-rating').value):null,status:document.getElementById('a-status').value,dateAdded:allItems[editingIdx.idx].dateAdded};
     if(type==='link')item.tag=document.getElementById('a-tag').value;
     if(!item.title)return;
-    allItems[editingIdx.idx]=item;syncItemsStorage();
+    if(USE_DB){
+      const oldId=allItems[editingIdx.idx].id;
+      const{error}=await db.from('items').update(itemToDb(item)).eq('id',oldId);
+      if(error){console.error(error);return}
+      item.id=oldId;
+    }
+    allItems[editingIdx.idx]=item;
+    if(!USE_DB)syncItemsStorage();
   }else{
     const text=document.getElementById('a-quote').value.trim();if(!text)return;
-    allQuotes[editingIdx.idx]={text,src:document.getElementById('a-qsrc').value.trim()};
-    syncQuotesStorage();
+    const q={text,src:document.getElementById('a-qsrc').value.trim()};
+    if(USE_DB){
+      const oldId=allQuotes[editingIdx.idx].id;
+      const{error}=await db.from('quotes').update(quoteToDb(q)).eq('id',oldId);
+      if(error){console.error(error);return}
+      q.id=oldId;
+    }
+    allQuotes[editingIdx.idx]=q;
+    if(!USE_DB)syncQuotesStorage();
   }
   editingIdx=null;render();showMsg();closeAdmin();
 }
 
-function deleteEntry(kind,idx){
+async function deleteEntry(kind,idx){
   if(!confirm('Delete?'))return;
-  if(kind==='item'){allItems.splice(idx,1);syncItemsStorage()}
-  else{allQuotes.splice(idx,1);syncQuotesStorage()}
+  if(kind==='item'){
+    if(USE_DB){
+      const{error}=await db.from('items').delete().eq('id',allItems[idx].id);
+      if(error){console.error(error);return}
+    }
+    allItems.splice(idx,1);
+    if(!USE_DB)syncItemsStorage();
+  }else{
+    if(USE_DB){
+      const{error}=await db.from('quotes').delete().eq('id',allQuotes[idx].id);
+      if(error){console.error(error);return}
+    }
+    allQuotes.splice(idx,1);
+    if(!USE_DB)syncQuotesStorage();
+  }
   render();
 }
 
@@ -1102,21 +1301,50 @@ function adminTab(tab,btn){
   document.querySelectorAll('.admin-form').forEach(f=>f.classList.remove('active'));
   document.getElementById('form-'+tab).classList.add('active');
 }
-function addItem(){
+async function addItem(){
   const title=document.getElementById('a-title').value.trim();if(!title)return;
   const type=document.getElementById('a-type').value;
   const item={type,title,url:document.getElementById('a-url').value.trim()||undefined,desc:document.getElementById('a-desc').value.trim(),rating:document.getElementById('a-rating').value?Number(document.getElementById('a-rating').value):null,status:document.getElementById('a-status').value,dateAdded:new Date().toISOString().slice(0,10)};
   if(type==='link')item.tag=document.getElementById('a-tag').value;
-  allItems.push(item);syncItemsStorage();render();showMsg();
+  if(USE_DB){
+    const{data,error}=await db.from('items').insert(itemToDb(item)).select().single();
+    if(error){console.error(error);return}
+    item.id=data.id;
+  }
+  allItems.push(item);
+  if(!USE_DB)syncItemsStorage();
+  render();showMsg();
   document.getElementById('a-title').value='';document.getElementById('a-url').value='';document.getElementById('a-desc').value='';document.getElementById('a-rating').value='';
 }
-function addQuote(){
+async function addQuote(){
   const text=document.getElementById('a-quote').value.trim();if(!text)return;
-  allQuotes.push({text,src:document.getElementById('a-qsrc').value.trim()});
-  syncQuotesStorage();render();showMsg();
+  const q={text,src:document.getElementById('a-qsrc').value.trim()};
+  if(USE_DB){
+    const{data,error}=await db.from('quotes').insert(quoteToDb(q)).select().single();
+    if(error){console.error(error);return}
+    q.id=data.id;
+  }
+  allQuotes.push(q);
+  if(!USE_DB)syncQuotesStorage();
+  render();showMsg();
   document.getElementById('a-quote').value='';document.getElementById('a-qsrc').value='';
 }
 function showMsg(){const m=document.getElementById('admin-msg');m.style.display='block';setTimeout(()=>m.style.display='none',2000)}
+
+async function saveViewerPw(){
+  const pw=document.getElementById('a-viewerpw').value.trim();
+  if(!pw)return;
+  const hash=await sha256(pw);
+  if(USE_DB){
+    const{error}=await db.from('site_settings').upsert({key:'viewer_pw_hash',value:hash});
+    if(error){console.error(error);return}
+  }else{
+    localStorage.setItem('listViewerPwHash',hash);
+  }
+  viewerPwHash=hash;
+  document.getElementById('a-viewerpw').value='';
+  showMsg();
+}
 
 // ══════════════════════════════
 //  CURSOR DONUT (rainbow)
@@ -1172,7 +1400,149 @@ function drawDonut(){
   dA+=0.02;dB+=0.025;requestAnimationFrame(drawDonut);
 }
 requestAnimationFrame(drawDonut);
-render();
+
+// ══════════════════════════════
+//  LOGIN GATE
+// ══════════════════════════════
+
+let viewerPwHash=null; // fetched from DB or localStorage
+
+function gateTab(tab){
+  document.querySelectorAll('.gate-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.gate-form').forEach(f=>f.classList.remove('active'));
+  document.getElementById('gt-'+tab).classList.add('active');
+  document.getElementById('gf-'+tab).classList.add('active');
+  document.getElementById('gate-err').textContent='';
+}
+
+function showGateErr(msg){
+  const el=document.getElementById('gate-err');
+  el.textContent=msg;
+  setTimeout(()=>{if(el.textContent===msg)el.textContent=''},3000);
+}
+
+function dismissGate(){
+  document.getElementById('login-gate').classList.add('hidden');
+}
+
+// Viewer login: passphrase → SHA-256 → compare
+document.getElementById('gate-enter-btn').addEventListener('click',async()=>{
+  const pw=document.getElementById('gate-pw').value;
+  if(!pw)return showGateErr('enter the passphrase');
+  const hash=await sha256(pw);
+  if(hash===viewerPwHash){
+    await enterSite(false);
+  }else showGateErr('wrong passphrase');
+});
+document.getElementById('gate-pw').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('gate-enter-btn').click();
+});
+
+// Admin login: Supabase auth (or localStorage fallback)
+document.getElementById('gate-signin-btn').addEventListener('click',async()=>{
+  if(USE_DB){
+    const email=document.getElementById('gate-email').value.trim();
+    const pw=document.getElementById('gate-adminpw').value;
+    if(!email||!pw)return showGateErr('enter email + password');
+    const{error}=await db.auth.signInWithPassword({email,password:pw});
+    if(error)return showGateErr(error.message);
+    await enterSite(true);
+  }else{
+    const pw=document.getElementById('gate-adminpw').value;
+    if(!pw)return showGateErr('enter password');
+    const hash=await sha256(pw);
+    const stored=localStorage.getItem('listPwHash');
+    if(!stored)return showGateErr('no admin password set');
+    if(hash===stored){await enterSite(true)}
+    else showGateErr('wrong password');
+  }
+});
+document.getElementById('gate-adminpw').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('gate-signin-btn').click();
+});
+
+// Admin signup
+document.getElementById('gate-signup-btn').addEventListener('click',async()=>{
+  if(!USE_DB)return showGateErr('signup requires Supabase');
+  const email=document.getElementById('gate-email').value.trim();
+  const pw=document.getElementById('gate-adminpw').value;
+  if(!email||pw.length<6)return showGateErr('need email + 6+ char password');
+  const{error}=await db.auth.signUp({email,password:pw});
+  if(error)return showGateErr(error.message);
+  await enterSite(true);
+});
+
+// ── LOAD SETTINGS FROM DB ──
+async function loadSettings(){
+  if(USE_DB){
+    const{data}=await db.from('site_settings').select('*');
+    if(data){
+      const map={};data.forEach(r=>map[r.key]=r.value);
+      if(map.viewer_pw_hash)viewerPwHash=map.viewer_pw_hash;
+      if(map.block_positions)try{blockPos=JSON.parse(map.block_positions)}catch(e){}
+      if(map.block_expanded){
+        try{blockExpanded=JSON.parse(map.block_expanded)}catch(e){}
+        CATEGORIES.forEach(c=>{if(blockExpanded[c.key]===undefined)blockExpanded[c.key]=true});
+      }
+    }
+  }else{
+    viewerPwHash=localStorage.getItem('listViewerPwHash')||await sha256('barbu');
+    try{blockPos=JSON.parse(localStorage.getItem('listBlkPos')||'{}')}catch(e){}
+    try{
+      blockExpanded=JSON.parse(localStorage.getItem('listBlkExp')||'{}');
+      CATEGORIES.forEach(c=>{if(blockExpanded[c.key]===undefined)blockExpanded[c.key]=true});
+    }catch(e){}
+  }
+}
+
+// ── INCREMENT & RENDER VISITOR COUNTER ──
+async function incrementVisits(){
+  if(USE_DB){
+    const{data,error}=await db.rpc('increment_visits');
+    if(!error&&data!=null)visits=data;
+  }else{
+    visits=parseInt(localStorage.getItem('listVisits')||'0')+1;
+    localStorage.setItem('listVisits',''+visits);
+  }
+  renderVisitCounter();
+}
+
+// ── ENTER SITE (called after successful login) ──
+async function enterSite(asAdmin){
+  await loadSettings();
+  await loadData();
+  await incrementVisits();
+  dismissGate();
+  if(asAdmin){
+    adminAuthenticated=true;adminMode=true;
+    document.body.classList.add('admin-on');
+    document.getElementById('admin-toggle').classList.add('active');
+    document.getElementById('admin-toggle').textContent='■ ADMIN';
+  }
+  render();
+}
+
+// ── INIT ──
+(async function init(){
+  // Fetch viewer password hash (needed for gate, before login)
+  if(USE_DB){
+    const{data}=await db.from('site_settings').select('value').eq('key','viewer_pw_hash').single();
+    if(data)viewerPwHash=data.value;
+  }else{
+    viewerPwHash=localStorage.getItem('listViewerPwHash')||await sha256('barbu');
+  }
+
+  // Check for existing Supabase session → auto-login as admin
+  if(USE_DB){
+    const{data:{session}}=await db.auth.getSession();
+    if(session){
+      await enterSite(true);
+      return;
+    }
+  }
+
+  // No session — show login gate
+})();
 </script>
 </body>
 </html>
