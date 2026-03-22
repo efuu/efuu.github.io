@@ -115,17 +115,21 @@ function renderMenu(menuItems) {
         grouped[catName].push({ name: resName, id: item.recipe });
     });
 
-    // We want some sensible order. Entrees first, then Sides, then Desserts if possible.
-    const priorityCategories = ['Entrees', 'Today\'s Soup', 'From the Grill', 'Plant protein', 'Vegetables', 'Starch And Potatoes', 'Desserts'];
+    // Filter to only include Entrees, Starch/Potatoes, and Desserts
+    const allowedKeywords = ['entree', 'starch', 'potato', 'dessert'];
     
     // Sort logic
-    const categoryKeys = Object.keys(grouped).sort((a, b) => {
-        const idxA = priorityCategories.indexOf(a);
-        const idxB = priorityCategories.indexOf(b);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return a.localeCompare(b);
+    const categoryKeys = Object.keys(grouped).filter(cat => {
+        const lowerCat = cat.toLowerCase();
+        return allowedKeywords.some(keyword => lowerCat.includes(keyword));
+    }).sort((a, b) => {
+        // Enforce a specific display order if possible
+        const order = ['entree', 'starch', 'potato', 'dessert'];
+        const getRank = (str) => {
+            const s = str.toLowerCase();
+            return order.findIndex(k => s.includes(k));
+        };
+        return getRank(a) - getRank(b);
     });
 
     // Render HTML
