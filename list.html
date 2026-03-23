@@ -1121,7 +1121,7 @@ function closeAdmin(){
 }
 
 document.getElementById('pw-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('pw-submit-btn').click();
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('pw-submit-btn').click()}
 });
 
 // ── ADMIN FORM ──
@@ -1370,31 +1370,27 @@ function dismissGate(){
   document.getElementById('login-gate').classList.add('hidden');
 }
 
-// Viewer login: passphrase → SHA-256 → compare
-document.getElementById('gate-enter-btn').addEventListener('click',async()=>{
+// Viewer login
+async function doViewerLogin(){
   const pw=document.getElementById('gate-pw').value;
   if(!pw)return showGateErr('enter the passphrase');
   const hash=await sha256(pw);
-  if(hash===viewerPwHash){
-    await enterSite(false);
-  }else showGateErr('wrong passphrase');
-});
-document.getElementById('gate-pw').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('gate-enter-btn').click();
-});
+  if(hash===viewerPwHash){await enterSite(false)}
+  else showGateErr('wrong passphrase');
+}
+document.getElementById('gate-enter-btn').addEventListener('click',doViewerLogin);
+document.getElementById('gate-pw').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doViewerLogin()}});
 
-// Admin login: passphrase → SHA-256 → compare against adminPwHash
-document.getElementById('gate-signin-btn').addEventListener('click',async()=>{
+// Admin login
+async function doAdminLogin(){
   const pw=document.getElementById('gate-adminpw').value;
   if(!pw)return showGateErr('enter admin passphrase');
   const hash=await sha256(pw);
-  if(hash===adminPwHash){
-    await enterSite(true);
-  }else showGateErr('wrong passphrase');
-});
-document.getElementById('gate-adminpw').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('gate-signin-btn').click();
-});
+  if(hash===adminPwHash){await enterSite(true)}
+  else showGateErr('wrong passphrase');
+}
+document.getElementById('gate-signin-btn').addEventListener('click',doAdminLogin);
+document.getElementById('gate-adminpw').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doAdminLogin()}});
 
 // ── LOAD SETTINGS FROM DB ──
 async function loadSettings(){
