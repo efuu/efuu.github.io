@@ -8,6 +8,7 @@ const ANNENBERG_ID = 30;
 let allCategories = {}; // { id: name }
 let allRecipes = {};    // { id: name }
 let currentMeal = 1;    // 1 = Lunch, 2 = Dinner
+let currentDate = new Date();
 
 const elements = {
     dateDisplay: document.getElementById('date-display'),
@@ -30,10 +31,24 @@ function initMealSelection() {
     }
 }
 
-// Formatting today's date
+// Formatting date
 function updateDateDisplay() {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    elements.dateDisplay.textContent = new Date().toLocaleDateString('en-US', options);
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const today = new Date();
+    
+    // Calculate difference in days
+    const diffTime = currentDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+    
+    let prefix = "";
+    if (diffDays === 0) {
+        prefix = "Today, ";
+    } else if (diffDays === 1) {
+        prefix = "Tomorrow, ";
+    } else if (diffDays === -1) {
+        prefix = "Yesterday, ";
+    }
+    elements.dateDisplay.textContent = prefix + currentDate.toLocaleDateString('en-US', options);
 }
 
 // Fetch categories and recipes so we can resolve IDs to names
@@ -82,7 +97,12 @@ async function fetchMenu(mealId) {
     try {
         await fetchDictionaries();
 
-        const url = getApiUrl(`/menus?location=${ANNENBERG_ID}&meal=${mealId}`);
+        // Format date to YYYY-MM-DD
+        const offset = currentDate.getTimezoneOffset();
+        const localDate = new Date(currentDate.getTime() - (offset * 60 * 1000));
+        const dateStr = localDate.toISOString().split('T')[0];
+
+        const url = getApiUrl(`/menus?location=${ANNENBERG_ID}&meal=${mealId}&date=${dateStr}`);
         const res = await fetch(url);
         
         if (!res.ok) throw new Error('Failed to fetch menus');
@@ -175,6 +195,18 @@ elements.tabs.forEach(tab => {
 });
 
 elements.retryBtn.addEventListener('click', () => {
+    fetchMenu(currentMeal);
+});
+
+document.getElementById('prev-day').addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate() - 1);
+    updateDateDisplay();
+    fetchMenu(currentMeal);
+});
+
+document.getElementById('next-day').addEventListener('click', () => {
+    currentDate.setDate(currentDate.getDate() + 1);
+    updateDateDisplay();
     fetchMenu(currentMeal);
 });
 
