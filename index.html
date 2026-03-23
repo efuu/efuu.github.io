@@ -39,7 +39,6 @@ canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacit
 }
 @keyframes scan{0%{top:-2px}100%{top:100vh}}
 
-/* ── CENTER ── */
 .center{
   position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -50,7 +49,7 @@ canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacit
 
 .portal{
   position:relative;width:160px;height:160px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  display:flex;align-items:center;justify-content:center;
   cursor:none;text-decoration:none;
   -webkit-tap-highlight-color:transparent;
 }
@@ -60,29 +59,34 @@ canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacit
   border:1px solid rgba(255,255,255,0.08);
   border-radius:50%;transition:all 1.2s cubic-bezier(0.16,1,0.3,1);
 }
-.portal:hover .portal-ring,.portal:active .portal-ring{
-  border-color:rgba(255,255,255,0.3);
-  box-shadow:0 0 80px rgba(255,255,255,0.04),inset 0 0 60px rgba(255,255,255,0.02);
+.portal.active .portal-ring,.portal:hover .portal-ring{
+  border-color:rgba(255,255,255,0.35);
+  box-shadow:0 0 80px rgba(255,255,255,0.05),inset 0 0 60px rgba(255,255,255,0.03);
   transform:scale(1.08);
 }
-.portal:hover .ring-2,.portal:active .ring-2{transform:scale(0.92) rotate(45deg)!important;border-color:rgba(255,255,255,0.18)}
-.portal:hover .ring-3,.portal:active .ring-3{transform:scale(1.18) rotate(-30deg)!important;border-color:rgba(255,255,255,0.1)}
+.portal.active .ring-2,.portal:hover .ring-2{transform:scale(0.92) rotate(45deg)!important;border-color:rgba(255,255,255,0.2)}
+.portal.active .ring-3,.portal:hover .ring-3{transform:scale(1.18) rotate(-30deg)!important;border-color:rgba(255,255,255,0.12)}
 .ring-2{transition:all 1.4s cubic-bezier(0.16,1,0.3,1)}
 .ring-3{transition:all 1s cubic-bezier(0.16,1,0.3,1)}
 
-/* ── ICON (SVG inside portal) ── */
-.portal-icon{
-  z-index:2;opacity:0.12;transition:all 0.8s cubic-bezier(0.16,1,0.3,1);
+/* ── PARTICLE CANVAS (inside each portal) ── */
+canvas.particles{
+  position:absolute;width:100%;height:100%;z-index:2;
+  pointer-events:none;border-radius:50%;
 }
-.portal-icon svg{width:32px;height:32px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.portal:hover .portal-icon,.portal:active .portal-icon{
-  opacity:0.75;filter:drop-shadow(0 0 20px rgba(255,255,255,0.15));
+
+/* ── HOTKEY HINT ── */
+.hotkey{
+  position:absolute;bottom:-28px;font-size:9px;letter-spacing:3px;
+  color:rgba(255,255,255,0);transition:all 0.6s ease;
+  z-index:3;
 }
+.portal.active .hotkey,.portal:hover .hotkey{color:rgba(255,255,255,0.15)}
 
 /* ── DIVIDER ── */
 .divider{width:1px;height:60px;background:linear-gradient(transparent,rgba(255,255,255,0.05),transparent)}
 
-/* ── CURSOR (desktop only) ── */
+/* ── CURSOR ── */
 .cursor{
   position:fixed;width:12px;height:12px;z-index:9999;
   pointer-events:none;mix-blend-mode:difference;
@@ -118,12 +122,19 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 }
 .transition-overlay.active{opacity:1;pointer-events:all}
 
+/* ── KONAMI FLASH ── */
+@keyframes konamiFlash{
+  0%{background:rgba(255,255,255,0)}
+  50%{background:rgba(255,255,255,0.04)}
+  100%{background:rgba(255,255,255,0)}
+}
+.konami-flash{animation:konamiFlash 0.6s ease}
+
 /* ── MOBILE ── */
 @media(max-width:600px){
   .portals{flex-direction:column;gap:50px}
   .divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
   .portal{width:130px;height:130px}
-  .portal-icon svg{width:26px;height:26px}
   .cursor{display:none}
   body{cursor:default}
   .portal{cursor:pointer}
@@ -132,21 +143,18 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
   .corner.bl,.corner.br{bottom:16px}
   .corner.tl,.corner.bl{left:16px}
   .corner.tr,.corner.br{right:16px}
+  .hotkey{display:none}
 }
 @media(max-width:360px){
   .portal{width:110px;height:110px}
-  .portal-icon svg{width:22px;height:22px}
   .portals{gap:40px}
 }
-
-/* ── TOUCH ACTIVE STATES ── */
 @media(hover:none){
   .portal:active .portal-ring{
-    border-color:rgba(255,255,255,0.3);
-    box-shadow:0 0 80px rgba(255,255,255,0.04),inset 0 0 60px rgba(255,255,255,0.02);
+    border-color:rgba(255,255,255,0.35);
+    box-shadow:0 0 80px rgba(255,255,255,0.05),inset 0 0 60px rgba(255,255,255,0.03);
     transform:scale(1.08);
   }
-  .portal:active .portal-icon{opacity:0.75;filter:drop-shadow(0 0 20px rgba(255,255,255,0.15))}
 }
 </style>
 </head>
@@ -158,7 +166,7 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 
 <div class="corner tl" id="time-display">00:00:00</div>
 <div class="corner tr" id="coord-display"></div>
-<div class="corner bl">2.0</div>
+<div class="corner bl" id="fps-display"></div>
 <div class="corner br">efuu</div>
 
 <div class="center">
@@ -167,14 +175,8 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
-      <div class="portal-icon">
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="1.5"/>
-          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
-          <path d="M2 12h20"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-      </div>
+      <canvas class="particles" id="particles-0"></canvas>
+      <div class="hotkey">[1]</div>
     </a>
 
     <div class="divider"></div>
@@ -183,14 +185,8 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
-      <div class="portal-icon">
-        <svg viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-      </div>
+      <canvas class="particles" id="particles-1"></canvas>
+      <div class="hotkey">[2]</div>
     </a>
   </div>
 </div>
@@ -199,23 +195,28 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 <div class="cursor" id="cursor"><div class="cursor-dot"></div><div class="cursor-ring"></div></div>
 
 <script>
+// ── CONFIG ──
+const URLS=['harvardmenu/','list.html'];
+const portals=[document.getElementById('p-menu'),document.getElementById('p-list')];
+let selected=-1; // keyboard focus index
+
 // ── CURSOR (desktop) ──
-const cursor=document.getElementById('cursor');
-let mx=-100,my=-100,cx=-100,cy=-100;
+const cursorEl=document.getElementById('cursor');
+let mx=-100,my=-100,curX=-100,curY=-100;
 const isTouch='ontouchstart'in window;
 if(!isTouch){
   document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
   (function loop(){
-    cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;
-    cursor.style.left=cx-6+'px';cursor.style.top=cy-6+'px';
+    curX+=(mx-curX)*0.12;curY+=(my-curY)*0.12;
+    cursorEl.style.left=curX-6+'px';cursorEl.style.top=curY-6+'px';
     requestAnimationFrame(loop);
   })();
-  document.querySelectorAll('.portal').forEach(p=>{
+  portals.forEach(p=>{
     p.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
     p.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
   });
 }else{
-  cursor.style.display='none';
+  cursorEl.style.display='none';
 }
 
 // ── NOISE ──
@@ -247,6 +248,95 @@ function spawnGlyph(){
 setInterval(spawnGlyph,1200);
 for(let i=0;i<8;i++)setTimeout(spawnGlyph,i*300);
 
+// ── PARTICLE SYSTEMS (one per portal) ──
+const pSystems=[];
+function initParticles(){
+  portals.forEach((portal,idx)=>{
+    const c=document.getElementById('particles-'+idx);
+    const size=portal.offsetWidth||160;
+    c.width=size;c.height=size;
+    const ctx=c.getContext('2d');
+    const dots=[];
+    const count=idx===0?12:16;
+    for(let i=0;i<count;i++){
+      if(idx===0){
+        // orbiting dots (circular motion)
+        const orbit=15+Math.random()*35;
+        const speed=0.003+Math.random()*0.006;
+        const phase=Math.random()*Math.PI*2;
+        dots.push({type:'orbit',orbit,speed,phase,angle:phase,r:1+Math.random()*1.5});
+      }else{
+        // constellation dots (drift + connect)
+        dots.push({
+          type:'constellation',
+          x:size*0.2+Math.random()*size*0.6,
+          y:size*0.2+Math.random()*size*0.6,
+          vx:(Math.random()-0.5)*0.3,
+          vy:(Math.random()-0.5)*0.3,
+          r:1+Math.random()*1.2
+        });
+      }
+    }
+    pSystems.push({ctx,dots,size,idx,hovered:false});
+  });
+}
+
+function drawParticles(time){
+  pSystems.forEach(sys=>{
+    const{ctx,dots,size,idx}=sys;
+    const cx=size/2,cy=size/2,rad=size/2;
+    ctx.clearRect(0,0,size,size);
+    const isHov=portals[idx].matches(':hover')||portals[idx].classList.contains('active');
+    const alpha=isHov?0.6:0.1;
+    const lineAlpha=isHov?0.15:0.03;
+
+    if(idx===0){
+      // orbiting particles
+      dots.forEach(d=>{
+        d.angle+=d.speed*(isHov?2.5:1);
+        const x=cx+Math.cos(d.angle)*d.orbit;
+        const y=cy+Math.sin(d.angle)*d.orbit;
+        ctx.beginPath();ctx.arc(x,y,d.r,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,'+alpha+')';ctx.fill();
+      });
+      // faint orbit rings
+      [20,35,50].forEach(r=>{
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.strokeStyle='rgba(255,255,255,'+(lineAlpha*0.5)+')';
+        ctx.lineWidth=0.5;ctx.stroke();
+      });
+    }else{
+      // constellation particles
+      dots.forEach(d=>{
+        d.x+=d.vx;d.y+=d.vy;
+        // bounce inside circle
+        const dx=d.x-cx,dy=d.y-cy;
+        if(Math.sqrt(dx*dx+dy*dy)>rad*0.7){
+          d.vx*=-1;d.vy*=-1;
+          d.x+=d.vx*2;d.y+=d.vy*2;
+        }
+        ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,'+alpha+')';ctx.fill();
+      });
+      // connecting lines
+      for(let i=0;i<dots.length;i++){
+        for(let j=i+1;j<dots.length;j++){
+          const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y;
+          const dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<55){
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x,dots[i].y);
+            ctx.lineTo(dots[j].x,dots[j].y);
+            ctx.strokeStyle='rgba(255,255,255,'+(lineAlpha*(1-dist/55))+')';
+            ctx.lineWidth=0.5;ctx.stroke();
+          }
+        }
+      }
+    }
+  });
+  requestAnimationFrame(drawParticles);
+}
+
 // ── CLOCK ──
 function tick(){
   const n=new Date();
@@ -257,7 +347,7 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-// ── COORDS (desktop) ──
+// ── COORDS ──
 if(!isTouch){
   document.addEventListener('mousemove',e=>{
     const x=((e.clientX/window.innerWidth)*180-90).toFixed(1);
@@ -265,6 +355,19 @@ if(!isTouch){
     document.getElementById('coord-display').textContent=y+'\u00B0 '+x+'\u00B0';
   });
 }
+
+// ── FPS COUNTER ──
+let frames=0,lastFps=Date.now();
+function countFps(){
+  frames++;
+  const now=Date.now();
+  if(now-lastFps>=1000){
+    document.getElementById('fps-display').textContent=frames+'fps';
+    frames=0;lastFps=now;
+  }
+  requestAnimationFrame(countFps);
+}
+countFps();
 
 // ── RIPPLE ──
 function doRipple(x,y){
@@ -288,8 +391,8 @@ function navigate(e,url){
 let angle=0;
 (function rot(){
   angle+=0.12;
-  document.querySelectorAll('.portal').forEach((p,i)=>{
-    if(p.matches(':hover')||p.matches(':active'))return;
+  portals.forEach((p,i)=>{
+    if(p.matches(':hover')||p.classList.contains('active'))return;
     const rings=p.querySelectorAll('.ring-2,.ring-3');
     const o=i*180;
     if(rings[0])rings[0].style.transform='scale(0.85) rotate('+(45+angle+o)+'deg)';
@@ -299,10 +402,77 @@ let angle=0;
 })();
 
 // ── KEYBOARD ──
+function selectPortal(idx){
+  portals.forEach((p,i)=>p.classList.toggle('active',i===idx));
+  selected=idx;
+  document.body.classList.toggle('hovering',idx>=0);
+}
 document.addEventListener('keydown',e=>{
-  if(e.key==='1'||e.key==='ArrowLeft'){e.preventDefault();navigate(new Event('x'),'harvardmenu/')}
-  if(e.key==='2'||e.key==='ArrowRight'){e.preventDefault();navigate(new Event('x'),'list.html')}
+  // direct jump
+  if(e.key==='1'){e.preventDefault();navigate(new Event('x'),URLS[0])}
+  if(e.key==='2'){e.preventDefault();navigate(new Event('x'),URLS[1])}
+  // arrow selection
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){
+    e.preventDefault();selectPortal(0);
+  }
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){
+    e.preventDefault();selectPortal(1);
+  }
+  // enter to confirm selection
+  if(e.key==='Enter'&&selected>=0){
+    e.preventDefault();navigate(new Event('x'),URLS[selected]);
+  }
+  // tab to toggle between portals
+  if(e.key==='Tab'){
+    e.preventDefault();
+    selectPortal(selected===0?1:0);
+  }
+  // escape to deselect
+  if(e.key==='Escape'){
+    selectPortal(-1);
+  }
 });
+
+// ── KONAMI CODE EASTER EGG ──
+const konami=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx=0;
+document.addEventListener('keydown',e=>{
+  if(e.key===konami[konamiIdx]){
+    konamiIdx++;
+    if(konamiIdx===konami.length){
+      konamiIdx=0;
+      document.body.classList.add('konami-flash');
+      setTimeout(()=>document.body.classList.remove('konami-flash'),600);
+      // invert colors for 3 seconds
+      document.body.style.filter='invert(1) hue-rotate(180deg)';
+      setTimeout(()=>document.body.style.filter='',3000);
+    }
+  }else{
+    konamiIdx=e.key===konami[0]?1:0;
+  }
+});
+
+// ── MAGNETIC CURSOR PULL (desktop) ──
+if(!isTouch){
+  const PULL_RANGE=200,PULL_STRENGTH=0.15;
+  portals.forEach(p=>{
+    p.addEventListener('mousemove',e=>{
+      const rect=p.getBoundingClientRect();
+      const pcx=rect.left+rect.width/2,pcy=rect.top+rect.height/2;
+      const dx=pcx-e.clientX,dy=pcy-e.clientY;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<PULL_RANGE&&dist>0){
+        const force=(1-dist/PULL_RANGE)*PULL_STRENGTH;
+        mx=e.clientX+dx*force;
+        my=e.clientY+dy*force;
+      }
+    });
+  });
+}
+
+// ── INIT ──
+initParticles();
+requestAnimationFrame(drawParticles);
 </script>
 </body>
 </html>
