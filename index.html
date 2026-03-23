@@ -2,190 +2,151 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>efuu</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-@font-face{font-family:'BerkeleyMono';src:local('Berkeley Mono'),local('BerkeleyMono-Regular')}
 body{
-  background:#000;color:#fff;font-family:'BerkeleyMono','Courier New',monospace;
-  height:100vh;overflow:hidden;cursor:none;user-select:none;
+  background:#000;color:#fff;font-family:'Courier New',monospace;
+  height:100vh;height:100dvh;overflow:hidden;cursor:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* ── STATIC NOISE BACKGROUND ── */
-canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.04}
+canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.035}
 
-/* ── GRID LINES ── */
 .grid{
   position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;
   background:
-    linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
-  background-size:60px 60px;
-  pointer-events:none;
+    linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;
 }
 
-/* ── FLOATING GLYPHS ── */
 .glyph{
-  position:fixed;z-index:2;font-size:11px;color:rgba(255,255,255,0.06);
+  position:fixed;z-index:2;font-size:11px;color:rgba(255,255,255,0.05);
   pointer-events:none;animation:drift 20s linear infinite;
 }
 @keyframes drift{
   0%{transform:translateY(0) rotate(0deg);opacity:0}
-  10%{opacity:0.06}
-  90%{opacity:0.06}
+  10%{opacity:0.05}90%{opacity:0.05}
   100%{transform:translateY(-100vh) rotate(360deg);opacity:0}
 }
 
-/* ── CENTER LAYOUT ── */
-.center{
-  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;
-}
-
-/* ── TITLE ── */
-.title{
-  font-size:13px;letter-spacing:12px;color:rgba(255,255,255,0.12);
-  margin-bottom:80px;text-transform:uppercase;
-}
-
-/* ── PORTALS ── */
-.portals{
-  display:flex;gap:120px;align-items:center;
-}
-.portal{
-  position:relative;width:180px;height:180px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:none;text-decoration:none;
-}
-.portal-ring{
-  position:absolute;width:100%;height:100%;
-  border:1px solid rgba(255,255,255,0.06);
-  border-radius:50%;transition:all 1.2s cubic-bezier(0.16,1,0.3,1);
-}
-.portal:hover .portal-ring{
-  border-color:rgba(255,255,255,0.25);
-  box-shadow:0 0 60px rgba(255,255,255,0.03),inset 0 0 60px rgba(255,255,255,0.02);
-  transform:scale(1.08);
-}
-.portal:hover .ring-2{transform:scale(0.92) rotate(45deg)!important;border-color:rgba(255,255,255,0.15)}
-.portal:hover .ring-3{transform:scale(1.18) rotate(-30deg)!important;border-color:rgba(255,255,255,0.08)}
-.ring-2{transition:all 1.4s cubic-bezier(0.16,1,0.3,1)}
-.ring-3{transition:all 1s cubic-bezier(0.16,1,0.3,1)}
-
-.portal-symbol{
-  font-size:22px;color:rgba(255,255,255,0.1);
-  transition:all 0.8s cubic-bezier(0.16,1,0.3,1);
-  z-index:2;letter-spacing:2px;
-}
-.portal:hover .portal-symbol{color:rgba(255,255,255,0.7);text-shadow:0 0 30px rgba(255,255,255,0.15)}
-
-.portal-label{
-  position:absolute;bottom:-40px;font-size:8px;letter-spacing:6px;
-  color:rgba(255,255,255,0);transition:all 0.8s ease;text-transform:uppercase;
-  white-space:nowrap;
-}
-.portal:hover .portal-label{color:rgba(255,255,255,0.3)}
-
-/* ── DIVIDER ── */
-.divider{
-  width:1px;height:80px;background:linear-gradient(transparent,rgba(255,255,255,0.06),transparent);
-}
-
-/* ── SCAN LINE ── */
 .scanline{
   position:fixed;top:0;left:0;width:100%;height:2px;z-index:99;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.025),transparent);
   animation:scan 8s linear infinite;pointer-events:none;
 }
 @keyframes scan{0%{top:-2px}100%{top:100vh}}
 
-/* ── CURSOR ── */
+/* ── CENTER ── */
+.center{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+/* ── PORTALS ── */
+.portals{display:flex;gap:100px;align-items:center}
+
+.portal{
+  position:relative;width:160px;height:160px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  cursor:none;text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.portal-ring{
+  position:absolute;width:100%;height:100%;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:50%;transition:all 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+.portal:hover .portal-ring,.portal:active .portal-ring{
+  border-color:rgba(255,255,255,0.3);
+  box-shadow:0 0 80px rgba(255,255,255,0.04),inset 0 0 60px rgba(255,255,255,0.02);
+  transform:scale(1.08);
+}
+.portal:hover .ring-2,.portal:active .ring-2{transform:scale(0.92) rotate(45deg)!important;border-color:rgba(255,255,255,0.18)}
+.portal:hover .ring-3,.portal:active .ring-3{transform:scale(1.18) rotate(-30deg)!important;border-color:rgba(255,255,255,0.1)}
+.ring-2{transition:all 1.4s cubic-bezier(0.16,1,0.3,1)}
+.ring-3{transition:all 1s cubic-bezier(0.16,1,0.3,1)}
+
+/* ── ICON (SVG inside portal) ── */
+.portal-icon{
+  z-index:2;opacity:0.12;transition:all 0.8s cubic-bezier(0.16,1,0.3,1);
+}
+.portal-icon svg{width:32px;height:32px;fill:none;stroke:#fff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.portal:hover .portal-icon,.portal:active .portal-icon{
+  opacity:0.75;filter:drop-shadow(0 0 20px rgba(255,255,255,0.15));
+}
+
+/* ── DIVIDER ── */
+.divider{width:1px;height:60px;background:linear-gradient(transparent,rgba(255,255,255,0.05),transparent)}
+
+/* ── CURSOR (desktop only) ── */
 .cursor{
   position:fixed;width:12px;height:12px;z-index:9999;
   pointer-events:none;mix-blend-mode:difference;
-  transition:transform 0.15s ease;
 }
-.cursor-dot{
-  width:4px;height:4px;background:#fff;position:absolute;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-}
+.cursor-dot{width:4px;height:4px;background:#fff;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
 .cursor-ring{
   width:12px;height:12px;border:1px solid rgba(255,255,255,0.4);
   position:absolute;top:0;left:0;transition:all 0.3s ease;border-radius:50%;
 }
-body.hovering .cursor-ring{
-  width:36px;height:36px;top:-12px;left:-12px;
-  border-color:rgba(255,255,255,0.6);
-}
+body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-color:rgba(255,255,255,0.6)}
 
 /* ── CORNER MARKS ── */
-.corner{position:fixed;z-index:5;font-size:8px;color:rgba(255,255,255,0.06);letter-spacing:2px}
-.corner.tl{top:30px;left:30px}
-.corner.tr{top:30px;right:30px}
-.corner.bl{bottom:30px;left:30px}
-.corner.br{bottom:30px;right:30px;text-align:right}
+.corner{position:fixed;z-index:5;font-size:7px;color:rgba(255,255,255,0.05);letter-spacing:2px}
+.corner.tl{top:24px;left:24px}
+.corner.tr{top:24px;right:24px}
+.corner.bl{bottom:24px;left:24px}
+.corner.br{bottom:24px;right:24px;text-align:right}
 
-/* ── BOTTOM PULSE ── */
-.pulse{
-  position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:5;
-  font-size:8px;color:rgba(255,255,255,0.08);letter-spacing:4px;
-  animation:bpulse 4s ease-in-out infinite;
-}
-@keyframes bpulse{0%,100%{opacity:0.08}50%{opacity:0.2}}
-
-/* ── CLICK RIPPLE ── */
+/* ── RIPPLE ── */
 .ripple{
-  position:fixed;border:1px solid rgba(255,255,255,0.15);border-radius:50%;
-  pointer-events:none;z-index:98;
-  animation:rippleOut 0.8s ease-out forwards;
+  position:fixed;border:1px solid rgba(255,255,255,0.12);border-radius:50%;
+  pointer-events:none;z-index:98;animation:rippleOut 0.8s ease-out forwards;
 }
 @keyframes rippleOut{
-  0%{width:0;height:0;opacity:0.4}
+  0%{width:0;height:0;opacity:0.3}
   100%{width:120px;height:120px;opacity:0;margin-top:-60px;margin-left:-60px}
 }
 
-/* ── TRANSITION OVERLAY ── */
+/* ── TRANSITION ── */
 .transition-overlay{
   position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;
-  background:#000;opacity:0;pointer-events:none;
-  transition:opacity 0.6s ease;
+  background:#000;opacity:0;pointer-events:none;transition:opacity 0.6s ease;
 }
 .transition-overlay.active{opacity:1;pointer-events:all}
 
-/* ── GLITCH TEXT ── */
-.glitch{position:relative}
-.glitch::before,.glitch::after{
-  content:attr(data-text);position:absolute;top:0;left:0;
-  width:100%;height:100%;
-}
-.glitch::before{
-  animation:glitch1 3s infinite;color:rgba(255,0,0,0.03);
-  clip-path:inset(0 0 80% 0);
-}
-.glitch::after{
-  animation:glitch2 3s infinite;color:rgba(0,255,255,0.03);
-  clip-path:inset(80% 0 0 0);
-}
-@keyframes glitch1{
-  0%,92%,100%{transform:none}
-  93%{transform:translate(-2px,-1px)}
-  96%{transform:translate(2px,1px)}
-}
-@keyframes glitch2{
-  0%,88%,100%{transform:none}
-  89%{transform:translate(2px,1px)}
-  94%{transform:translate(-1px,-2px)}
-}
-
 /* ── MOBILE ── */
 @media(max-width:600px){
-  .portals{flex-direction:column;gap:60px}
-  .divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent)}
-  .portal{width:140px;height:140px}
-  .portal-label{bottom:-30px;font-size:7px}
-  .corner{font-size:7px}
+  .portals{flex-direction:column;gap:50px}
+  .divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
+  .portal{width:130px;height:130px}
+  .portal-icon svg{width:26px;height:26px}
+  .cursor{display:none}
+  body{cursor:default}
+  .portal{cursor:pointer}
+  .corner{font-size:6px}
+  .corner.tl,.corner.tr{top:16px}
+  .corner.bl,.corner.br{bottom:16px}
+  .corner.tl,.corner.bl{left:16px}
+  .corner.tr,.corner.br{right:16px}
+}
+@media(max-width:360px){
+  .portal{width:110px;height:110px}
+  .portal-icon svg{width:22px;height:22px}
+  .portals{gap:40px}
+}
+
+/* ── TOUCH ACTIVE STATES ── */
+@media(hover:none){
+  .portal:active .portal-ring{
+    border-color:rgba(255,255,255,0.3);
+    box-shadow:0 0 80px rgba(255,255,255,0.04),inset 0 0 60px rgba(255,255,255,0.02);
+    transform:scale(1.08);
+  }
+  .portal:active .portal-icon{opacity:0.75;filter:drop-shadow(0 0 20px rgba(255,255,255,0.15))}
 }
 </style>
 </head>
@@ -195,21 +156,25 @@ body.hovering .cursor-ring{
 <div class="grid"></div>
 <div class="scanline"></div>
 
-<div class="corner tl">SYS.0</div>
-<div class="corner tr" id="coord-display">00.0°</div>
-<div class="corner bl" id="time-display">00:00:00</div>
-<div class="corner br">efuu<br>v2.0</div>
+<div class="corner tl" id="time-display">00:00:00</div>
+<div class="corner tr" id="coord-display"></div>
+<div class="corner bl">2.0</div>
+<div class="corner br">efuu</div>
 
 <div class="center">
-  <div class="title glitch" data-text="efuu">efuu</div>
-
   <div class="portals">
     <a class="portal" id="p-menu" href="harvardmenu/" onclick="navigate(event,'harvardmenu/')">
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
-      <div class="portal-symbol">&#9678;</div>
-      <div class="portal-label">nourish</div>
+      <div class="portal-icon">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="1.5"/>
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/>
+          <path d="M2 12h20"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </div>
     </a>
 
     <div class="divider"></div>
@@ -218,49 +183,55 @@ body.hovering .cursor-ring{
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
-      <div class="portal-symbol">&#9687;</div>
-      <div class="portal-label">archive</div>
+      <div class="portal-icon">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </div>
     </a>
   </div>
 </div>
 
-<div class="pulse">select endpoint</div>
 <div class="transition-overlay" id="transition"></div>
 <div class="cursor" id="cursor"><div class="cursor-dot"></div><div class="cursor-ring"></div></div>
 
 <script>
-// ── CUSTOM CURSOR ──
+// ── CURSOR (desktop) ──
 const cursor=document.getElementById('cursor');
 let mx=-100,my=-100,cx=-100,cy=-100;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-(function loop(){
-  cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;
-  cursor.style.left=cx-6+'px';cursor.style.top=cy-6+'px';
-  requestAnimationFrame(loop);
-})();
+const isTouch='ontouchstart'in window;
+if(!isTouch){
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+  (function loop(){
+    cx+=(mx-cx)*0.12;cy+=(my-cy)*0.12;
+    cursor.style.left=cx-6+'px';cursor.style.top=cy-6+'px';
+    requestAnimationFrame(loop);
+  })();
+  document.querySelectorAll('.portal').forEach(p=>{
+    p.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+    p.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+  });
+}else{
+  cursor.style.display='none';
+}
 
-document.querySelectorAll('.portal').forEach(p=>{
-  p.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
-  p.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
-});
-
-// ── NOISE CANVAS ──
+// ── NOISE ──
 const nc=document.getElementById('noise'),nx=nc.getContext('2d');
 function resizeNoise(){nc.width=window.innerWidth/4;nc.height=window.innerHeight/4}
 resizeNoise();window.addEventListener('resize',resizeNoise);
 function drawNoise(){
   const img=nx.createImageData(nc.width,nc.height);
   const d=img.data;
-  for(let i=0;i<d.length;i+=8){
-    const v=Math.random()*255;
-    d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;
-  }
+  for(let i=0;i<d.length;i+=8){const v=Math.random()*255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
   nx.putImageData(img,0,0);
 }
 setInterval(drawNoise,120);
 
-// ── FLOATING GLYPHS ──
-const glyphs='\u27D0\u27E1\u2B21\u2394\u23E3\u25C7\u25C8\u2B22\u27E0\u23E5\u238A\u23E2\u25B3\u25BD\u22A1\u229E\u2295\u2297\u2298\u27C1\u23C3\u23C4\u23C5'.split('');
+// ── GLYPHS ──
+const glyphs='\u27D0\u25C7\u25C8\u2B21\u2B22\u25B3\u25BD\u2295\u2297\u2298\u229E\u22A1'.split('');
 function spawnGlyph(){
   const g=document.createElement('div');
   g.className='glyph';
@@ -269,59 +240,65 @@ function spawnGlyph(){
   g.style.top=100+Math.random()*20+'%';
   const dur=15+Math.random()*25;
   g.style.animationDuration=dur+'s';
-  g.style.fontSize=8+Math.random()*6+'px';
+  g.style.fontSize=8+Math.random()*5+'px';
   document.body.appendChild(g);
   setTimeout(()=>g.remove(),dur*1000);
 }
-setInterval(spawnGlyph,900);
-for(let i=0;i<10;i++)setTimeout(spawnGlyph,i*250);
+setInterval(spawnGlyph,1200);
+for(let i=0;i<8;i++)setTimeout(spawnGlyph,i*300);
 
 // ── CLOCK ──
-function updateTime(){
-  const now=new Date();
+function tick(){
+  const n=new Date();
   document.getElementById('time-display').textContent=
-    String(now.getHours()).padStart(2,'0')+':'+
-    String(now.getMinutes()).padStart(2,'0')+':'+
-    String(now.getSeconds()).padStart(2,'0');
+    String(n.getHours()).padStart(2,'0')+':'+
+    String(n.getMinutes()).padStart(2,'0')+':'+
+    String(n.getSeconds()).padStart(2,'0');
 }
-setInterval(updateTime,1000);updateTime();
+setInterval(tick,1000);tick();
 
-// ── COORDINATE DISPLAY (tracks mouse) ──
-document.addEventListener('mousemove',e=>{
-  const x=((e.clientX/window.innerWidth)*180-90).toFixed(1);
-  const y=((e.clientY/window.innerHeight)*90-45).toFixed(1);
-  document.getElementById('coord-display').textContent=y+'\u00B0N '+x+'\u00B0E';
-});
+// ── COORDS (desktop) ──
+if(!isTouch){
+  document.addEventListener('mousemove',e=>{
+    const x=((e.clientX/window.innerWidth)*180-90).toFixed(1);
+    const y=((e.clientY/window.innerHeight)*90-45).toFixed(1);
+    document.getElementById('coord-display').textContent=y+'\u00B0 '+x+'\u00B0';
+  });
+}
 
-// ── CLICK RIPPLE ──
-document.addEventListener('click',e=>{
+// ── RIPPLE ──
+function doRipple(x,y){
   const r=document.createElement('div');
-  r.className='ripple';r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';
-  document.body.appendChild(r);
-  setTimeout(()=>r.remove(),800);
-});
+  r.className='ripple';r.style.left=x+'px';r.style.top=y+'px';
+  document.body.appendChild(r);setTimeout(()=>r.remove(),800);
+}
+document.addEventListener('click',e=>doRipple(e.clientX,e.clientY));
+document.addEventListener('touchstart',e=>{
+  const t=e.touches[0];if(t)doRipple(t.clientX,t.clientY);
+},{passive:true});
 
-// ── NAVIGATION WITH TRANSITION ──
+// ── NAVIGATE ──
 function navigate(e,url){
   e.preventDefault();
   document.getElementById('transition').classList.add('active');
   setTimeout(()=>window.location.href=url,600);
 }
 
-// ── PORTAL IDLE ROTATION ──
+// ── RING ROTATION ──
 let angle=0;
-(function rotateRings(){
+(function rot(){
   angle+=0.12;
   document.querySelectorAll('.portal').forEach((p,i)=>{
+    if(p.matches(':hover')||p.matches(':active'))return;
     const rings=p.querySelectorAll('.ring-2,.ring-3');
-    const offset=i*180;
-    if(rings[0]&&!p.matches(':hover'))rings[0].style.transform='scale(0.85) rotate('+(45+angle+offset)+'deg)';
-    if(rings[1]&&!p.matches(':hover'))rings[1].style.transform='scale(1.12) rotate('+(-30-angle*0.7+offset)+'deg)';
+    const o=i*180;
+    if(rings[0])rings[0].style.transform='scale(0.85) rotate('+(45+angle+o)+'deg)';
+    if(rings[1])rings[1].style.transform='scale(1.12) rotate('+(-30-angle*0.7+o)+'deg)';
   });
-  requestAnimationFrame(rotateRings);
+  requestAnimationFrame(rot);
 })();
 
-// ── KEYBOARD NAV ──
+// ── KEYBOARD ──
 document.addEventListener('keydown',e=>{
   if(e.key==='1'||e.key==='ArrowLeft'){e.preventDefault();navigate(new Event('x'),'harvardmenu/')}
   if(e.key==='2'||e.key==='ArrowRight'){e.preventDefault();navigate(new Event('x'),'list.html')}
