@@ -118,7 +118,7 @@ $$ language plpgsql security definer;
 -- seed data (default viewer passphrase: "barbu", admin passphrase: "efuu")
 insert into site_settings (key, value) values
   ('viewer_pw_hash', 'e92a2dd9c7ea5d79789f9806cfa4c7c35a3f65496fdb938fa6d0e8c5996f3354'),
-  ('admin_pw_hash',  '05340f7b77d45d8df98d8559a62d0af0af6de18f40605d1d3af1c59f480df55c'),
+  ('admin_pw_hash',  'ed227bb0d191d168545bec592e8b9c1199ef4ffa122a7395ededa0cf888dc09f'),
   ('visit_count', '0'),
   ('block_positions', '{}'),
   ('block_expanded', '{}')

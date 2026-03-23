@@ -171,7 +171,7 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 
 <div class="center">
   <div class="portals">
-    <a class="portal" id="p-menu" href="harvardmenu/" onclick="navigate(event,'harvardmenu/')">
+    <a class="portal" id="p-list" href="list.html" onclick="navigate(event,'list.html')">
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
@@ -181,7 +181,7 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 
     <div class="divider"></div>
 
-    <a class="portal" id="p-list" href="list.html" onclick="navigate(event,'list.html')">
+    <a class="portal" id="p-menu" href="harvardmenu/" onclick="navigate(event,'harvardmenu/')">
       <div class="portal-ring"></div>
       <div class="portal-ring ring-2"></div>
       <div class="portal-ring ring-3"></div>
@@ -196,8 +196,8 @@ body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-co
 
 <script>
 // ── CONFIG ──
-const URLS=['harvardmenu/','list.html'];
-const portals=[document.getElementById('p-menu'),document.getElementById('p-list')];
+const URLS=['list.html','harvardmenu/'];
+const portals=[document.getElementById('p-list'),document.getElementById('p-menu')];
 let selected=-1; // keyboard focus index
 
 // ── CURSOR (desktop) ──

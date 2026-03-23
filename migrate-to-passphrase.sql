@@ -32,5 +32,5 @@ create policy "Anon update settings" on site_settings for update using  (true);
 
 -- ── SEED ADMIN PASSPHRASE (default: "efuu") ──
 insert into site_settings (key, value)
-values ('admin_pw_hash', '05340f7b77d45d8df98d8559a62d0af0af6de18f40605d1d3af1c59f480df55c')
+values ('admin_pw_hash', 'ed227bb0d191d168545bec592e8b9c1199ef4ffa122a7395ededa0cf888dc09f')
 on conflict (key) do nothing;
