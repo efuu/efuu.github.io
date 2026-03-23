@@ -1,6 +1,6 @@
 const RAW_API_BASE = 'https://api.cs50.io/dining';
 function getApiUrl(endpoint) {
-    return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(RAW_API_BASE + endpoint);
+    return 'https://corsproxy.io/?' + encodeURIComponent(RAW_API_BASE + endpoint);
 }
 const ANNENBERG_ID = 30;
 
