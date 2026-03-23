@@ -118,8 +118,8 @@ function renderMenu(menuItems) {
         grouped[catName].push({ name: resName, id: item.recipe });
     });
 
-    // Filter to only include Entrees, Starch/Potatoes, and Desserts
-    const allowedKeywords = ['entree', 'starch', 'potato', 'dessert'];
+    // Filter to only include Entrees, Starch/Potatoes, Desserts, and Brain Break
+    const allowedKeywords = ['entree', 'starch', 'potato', 'dessert', 'brain break'];
     
     // Sort logic
     const categoryKeys = Object.keys(grouped).filter(cat => {
@@ -127,7 +127,7 @@ function renderMenu(menuItems) {
         return allowedKeywords.some(keyword => lowerCat.includes(keyword));
     }).sort((a, b) => {
         // Enforce a specific display order if possible
-        const order = ['entree', 'starch', 'potato', 'dessert'];
+        const order = ['entree', 'starch', 'potato', 'dessert', 'brain break'];
         const getRank = (str) => {
             const s = str.toLowerCase();
             return order.findIndex(k => s.includes(k));
