@@ -445,10 +445,8 @@ body.admin-on .item-admin{display:flex}
       <button class="gate-btn" id="gate-enter-btn">ENTER</button>
     </div>
     <div class="gate-form" id="gf-admin">
-      <input type="email" id="gate-email" placeholder="email" autocomplete="email">
-      <input type="password" id="gate-adminpw" placeholder="password" autocomplete="current-password">
-      <button class="gate-btn" id="gate-signin-btn">SIGN IN</button>
-      <button class="gate-btn" id="gate-signup-btn" style="background:none;color:#111;margin-top:4px">SIGN UP</button>
+      <input type="password" id="gate-adminpw" placeholder="admin passphrase" autocomplete="off">
+      <button class="gate-btn" id="gate-signin-btn">ENTER</button>
     </div>
     <div class="gate-err" id="gate-err"></div>
   </div>
@@ -461,15 +459,12 @@ body.admin-on .item-admin{display:flex}
 <div class="admin-overlay" id="admin">
   <div class="admin-panel">
     <div class="pw-prompt" id="pw-gate">
-      <h2>AUTH</h2>
-      <div id="pw-mode-text" style="color:#999;font-size:9px;margin-bottom:1rem"></div>
-      <input type="email" id="pw-email" placeholder="email" autocomplete="email" style="margin-bottom:8px;display:none">
+      <h2>ADMIN</h2>
+      <div style="color:#999;font-size:9px;margin-bottom:1rem">enter admin passphrase</div>
       <input type="password" id="pw-input" placeholder="••••••" autocomplete="off">
       <div class="pw-err" id="pw-err"></div>
-      <div class="pw-setup" id="pw-setup"></div>
       <div class="admin-btns" style="justify-content:center;margin-top:1rem">
-        <button class="admin-btn" id="pw-submit-btn">SIGN IN</button>
-        <button class="admin-btn" id="pw-signup-btn" style="border-color:#ccc;color:#999;display:none">SIGN UP</button>
+        <button class="admin-btn" id="pw-submit-btn">ENTER</button>
         <button class="admin-btn close" onclick="closeAdmin()">CANCEL</button>
       </div>
     </div>
@@ -506,10 +501,13 @@ body.admin-on .item-admin{display:flex}
       </div>
       <div class="admin-form" id="form-site">
         <label>viewer passphrase</label>
-        <input id="a-viewerpw" type="text" placeholder="new passphrase for viewers">
-        <div style="font-size:9px;color:#999;margin:4px 0 12px">anyone with this passphrase can view your collection</div>
+        <input id="a-viewerpw" type="text" placeholder="new viewer passphrase">
+        <div style="font-size:9px;color:#999;margin:4px 0 12px">anyone with this can view your collection</div>
+        <label>admin passphrase</label>
+        <input id="a-adminpw" type="text" placeholder="new admin passphrase">
+        <div style="font-size:9px;color:#999;margin:4px 0 12px">grants full edit access</div>
         <div class="admin-btns">
-          <button class="admin-btn" onclick="saveViewerPw()">UPDATE</button>
+          <button class="admin-btn" onclick="savePassphrases()">UPDATE</button>
           <button class="admin-btn close" onclick="closeAdmin()">CLOSE</button>
         </div>
       </div>
@@ -1062,8 +1060,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-let authCallback=null;
-let authIsSignUp=false;
+let adminPwHash=null;
 
 function toggleAdminMode(){
   if(!adminMode){
@@ -1091,79 +1088,21 @@ function showAuthErr(msg){
 }
 
 function openAuthGate(cb){
-  authCallback=cb;
-  authIsSignUp=false;
   document.getElementById('admin').classList.add('open');
   document.getElementById('pw-gate').style.display='';
   document.getElementById('admin-main').style.display='none';
   document.getElementById('pw-input').value='';
   document.getElementById('pw-err').style.display='none';
-
-  if(USE_DB){
-    // Supabase auth mode
-    document.getElementById('pw-email').style.display='';
-    document.getElementById('pw-email').value='';
-    document.getElementById('pw-signup-btn').style.display='';
-    document.getElementById('pw-mode-text').textContent='sign in to manage your collection';
-    document.getElementById('pw-setup').textContent='';
-    document.getElementById('pw-submit-btn').textContent='SIGN IN';
-    document.getElementById('pw-submit-btn').onclick=doSupabaseSignIn;
-    document.getElementById('pw-signup-btn').textContent='SIGN UP';
-    document.getElementById('pw-signup-btn').onclick=doSupabaseSignUp;
-    setTimeout(()=>document.getElementById('pw-email').focus(),100);
-  }else{
-    // localStorage fallback
-    document.getElementById('pw-email').style.display='none';
-    document.getElementById('pw-signup-btn').style.display='none';
-    const storedHash=localStorage.getItem('listPwHash');
-    if(!storedHash){
-      document.getElementById('pw-mode-text').textContent='create your access key (first time)';
-      document.getElementById('pw-setup').textContent='hashed locally — never stored in plaintext';
-      document.getElementById('pw-submit-btn').textContent='SET';
-      document.getElementById('pw-submit-btn').onclick=setupPwLocal;
-    }else{
-      document.getElementById('pw-mode-text').textContent='enter access key';
-      document.getElementById('pw-setup').textContent='';
-      document.getElementById('pw-submit-btn').textContent='AUTH';
-      document.getElementById('pw-submit-btn').onclick=checkPwLocal;
-    }
-    setTimeout(()=>document.getElementById('pw-input').focus(),100);
-  }
-}
-
-// ── Supabase Auth ──
-async function doSupabaseSignIn(){
-  const email=document.getElementById('pw-email').value.trim();
-  const pw=document.getElementById('pw-input').value;
-  if(!email||!pw)return showAuthErr('enter email + password');
-  const{error}=await db.auth.signInWithPassword({email,password:pw});
-  if(error)return showAuthErr(error.message);
-  document.getElementById('admin').classList.remove('open');
-  if(authCallback){authCallback();authCallback=null}
-}
-async function doSupabaseSignUp(){
-  const email=document.getElementById('pw-email').value.trim();
-  const pw=document.getElementById('pw-input').value;
-  if(!email||pw.length<6)return showAuthErr('need email + 6+ char password');
-  const{error}=await db.auth.signUp({email,password:pw});
-  if(error)return showAuthErr(error.message);
-  document.getElementById('admin').classList.remove('open');
-  if(authCallback){authCallback();authCallback=null}
-}
-
-// ── localStorage fallback Auth ──
-async function setupPwLocal(){
-  const pw=document.getElementById('pw-input').value;if(pw.length<2)return;
-  localStorage.setItem('listPwHash',await sha256(pw));
-  document.getElementById('admin').classList.remove('open');
-  if(authCallback){authCallback();authCallback=null}
-}
-async function checkPwLocal(){
-  const hash=await sha256(document.getElementById('pw-input').value);
-  if(hash===localStorage.getItem('listPwHash')){
-    document.getElementById('admin').classList.remove('open');
-    if(authCallback){authCallback();authCallback=null}
-  }else showAuthErr('ACCESS DENIED');
+  document.getElementById('pw-submit-btn').onclick=async()=>{
+    const pw=document.getElementById('pw-input').value;
+    if(!pw)return showAuthErr('enter passphrase');
+    const hash=await sha256(pw);
+    if(hash===adminPwHash){
+      document.getElementById('admin').classList.remove('open');
+      cb();
+    }else showAuthErr('wrong passphrase');
+  };
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
 }
 
 function openAdmin(){
@@ -1181,12 +1120,8 @@ function closeAdmin(){
   document.getElementById('quote-submit-btn').onclick=()=>addQuote();
 }
 
-// Enter key in auth forms
 document.getElementById('pw-input').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    if(USE_DB)doSupabaseSignIn();
-    else{const h=localStorage.getItem('listPwHash');if(!h)setupPwLocal();else checkPwLocal()}
-  }
+  if(e.key==='Enter')document.getElementById('pw-submit-btn').click();
 });
 
 // ── ADMIN FORM ──
@@ -1331,18 +1266,28 @@ async function addQuote(){
 }
 function showMsg(){const m=document.getElementById('admin-msg');m.style.display='block';setTimeout(()=>m.style.display='none',2000)}
 
-async function saveViewerPw(){
-  const pw=document.getElementById('a-viewerpw').value.trim();
-  if(!pw)return;
-  const hash=await sha256(pw);
-  if(USE_DB){
-    const{error}=await db.from('site_settings').upsert({key:'viewer_pw_hash',value:hash});
-    if(error){console.error(error);return}
-  }else{
-    localStorage.setItem('listViewerPwHash',hash);
+async function savePassphrases(){
+  const vpw=document.getElementById('a-viewerpw').value.trim();
+  const apw=document.getElementById('a-adminpw').value.trim();
+  if(!vpw&&!apw)return;
+  if(vpw){
+    const hash=await sha256(vpw);
+    if(USE_DB){
+      const{error}=await db.from('site_settings').upsert({key:'viewer_pw_hash',value:hash});
+      if(error){console.error(error);return}
+    }else localStorage.setItem('listViewerPwHash',hash);
+    viewerPwHash=hash;
   }
-  viewerPwHash=hash;
+  if(apw){
+    const hash=await sha256(apw);
+    if(USE_DB){
+      const{error}=await db.from('site_settings').upsert({key:'admin_pw_hash',value:hash});
+      if(error){console.error(error);return}
+    }else localStorage.setItem('listAdminPwHash',hash);
+    adminPwHash=hash;
+  }
   document.getElementById('a-viewerpw').value='';
+  document.getElementById('a-adminpw').value='';
   showMsg();
 }
 
@@ -1438,38 +1383,17 @@ document.getElementById('gate-pw').addEventListener('keydown',e=>{
   if(e.key==='Enter')document.getElementById('gate-enter-btn').click();
 });
 
-// Admin login: Supabase auth (or localStorage fallback)
+// Admin login: passphrase → SHA-256 → compare against adminPwHash
 document.getElementById('gate-signin-btn').addEventListener('click',async()=>{
-  if(USE_DB){
-    const email=document.getElementById('gate-email').value.trim();
-    const pw=document.getElementById('gate-adminpw').value;
-    if(!email||!pw)return showGateErr('enter email + password');
-    const{error}=await db.auth.signInWithPassword({email,password:pw});
-    if(error)return showGateErr(error.message);
+  const pw=document.getElementById('gate-adminpw').value;
+  if(!pw)return showGateErr('enter admin passphrase');
+  const hash=await sha256(pw);
+  if(hash===adminPwHash){
     await enterSite(true);
-  }else{
-    const pw=document.getElementById('gate-adminpw').value;
-    if(!pw)return showGateErr('enter password');
-    const hash=await sha256(pw);
-    const stored=localStorage.getItem('listPwHash');
-    if(!stored)return showGateErr('no admin password set');
-    if(hash===stored){await enterSite(true)}
-    else showGateErr('wrong password');
-  }
+  }else showGateErr('wrong passphrase');
 });
 document.getElementById('gate-adminpw').addEventListener('keydown',e=>{
   if(e.key==='Enter')document.getElementById('gate-signin-btn').click();
-});
-
-// Admin signup
-document.getElementById('gate-signup-btn').addEventListener('click',async()=>{
-  if(!USE_DB)return showGateErr('signup requires Supabase');
-  const email=document.getElementById('gate-email').value.trim();
-  const pw=document.getElementById('gate-adminpw').value;
-  if(!email||pw.length<6)return showGateErr('need email + 6+ char password');
-  const{error}=await db.auth.signUp({email,password:pw});
-  if(error)return showGateErr(error.message);
-  await enterSite(true);
 });
 
 // ── LOAD SETTINGS FROM DB ──
@@ -1479,6 +1403,7 @@ async function loadSettings(){
     if(data){
       const map={};data.forEach(r=>map[r.key]=r.value);
       if(map.viewer_pw_hash)viewerPwHash=map.viewer_pw_hash;
+      if(map.admin_pw_hash)adminPwHash=map.admin_pw_hash;
       if(map.block_positions)try{blockPos=JSON.parse(map.block_positions)}catch(e){}
       if(map.block_expanded){
         try{blockExpanded=JSON.parse(map.block_expanded)}catch(e){}
@@ -1524,24 +1449,20 @@ async function enterSite(asAdmin){
 
 // ── INIT ──
 (async function init(){
-  // Fetch viewer password hash (needed for gate, before login)
+  // Fetch password hashes (needed for gate, before login)
   if(USE_DB){
-    const{data}=await db.from('site_settings').select('value').eq('key','viewer_pw_hash').single();
-    if(data)viewerPwHash=data.value;
+    const{data}=await db.from('site_settings').select('*').in('key',['viewer_pw_hash','admin_pw_hash']);
+    if(data){
+      data.forEach(r=>{
+        if(r.key==='viewer_pw_hash')viewerPwHash=r.value;
+        if(r.key==='admin_pw_hash')adminPwHash=r.value;
+      });
+    }
   }else{
     viewerPwHash=localStorage.getItem('listViewerPwHash')||await sha256('barbu');
+    adminPwHash=localStorage.getItem('listAdminPwHash')||await sha256('efuu');
   }
-
-  // Check for existing Supabase session → auto-login as admin
-  if(USE_DB){
-    const{data:{session}}=await db.auth.getSession();
-    if(session){
-      await enterSite(true);
-      return;
-    }
-  }
-
-  // No session — show login gate
+  // Show login gate (no auto-login)
 })();
 </script>
 </body>

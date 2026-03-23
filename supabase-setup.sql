@@ -1,17 +1,19 @@
 -- ╔══════════════════════════════════════╗
--- ║  /list — Supabase Database Setup    ║
+-- ║  efuu — Supabase Database Setup     ║
 -- ╚══════════════════════════════════════╝
 --
 -- SETUP:
 --   1. Create free account at https://supabase.com
 --   2. Create a new project (pick any region, note your password)
 --   3. Go to SQL Editor → New Query → paste this entire file → Run
---   4. Go to Authentication → Providers → Email → DISABLE "Confirm email"
---   5. Copy your Project URL + anon key (Settings → API) into index.html
---   6. Visit your site, click ADMIN, sign up once with email + password
---   7. OPTIONAL: After signup, go to Authentication → Settings →
---      disable "Allow new users to sign up" to lock your site
+--   4. Copy your Project URL + anon key (Settings → API) into index.html
+--   5. Visit your site, log in with viewer passphrase "barbu"
+--   6. Switch to ADMIN tab, log in with admin passphrase "efuu"
+--   7. Change both passphrases in ADMIN → SITE settings
 --
+-- NOTE: Auth is passphrase-based (no Supabase Auth needed).
+--       All DB writes go through the anon key. Security is enforced
+--       by the site's passphrase gate — RLS allows anon read/write.
 
 -- ══════════════════════════════
 --  TABLES
@@ -51,6 +53,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists items_updated_at on items;
 create trigger items_updated_at
   before update on items
   for each row execute function update_updated_at();
@@ -62,18 +65,17 @@ create trigger items_updated_at
 alter table items  enable row level security;
 alter table quotes enable row level security;
 
--- anyone can read (it's a public site)
-create policy "Public read items"  on items  for select using (true);
-create policy "Public read quotes" on quotes for select using (true);
+-- items: full access for anon (auth enforced at app level via passphrase)
+create policy "Public read items"   on items for select using (true);
+create policy "Anon insert items"   on items for insert with check (true);
+create policy "Anon update items"   on items for update using  (true);
+create policy "Anon delete items"   on items for delete using  (true);
 
--- only signed-in users can write
-create policy "Auth insert items"  on items  for insert with check (auth.role() = 'authenticated');
-create policy "Auth update items"  on items  for update using  (auth.role() = 'authenticated');
-create policy "Auth delete items"  on items  for delete using  (auth.role() = 'authenticated');
-
-create policy "Auth insert quotes" on quotes for insert with check (auth.role() = 'authenticated');
-create policy "Auth update quotes" on quotes for update using  (auth.role() = 'authenticated');
-create policy "Auth delete quotes" on quotes for delete using  (auth.role() = 'authenticated');
+-- quotes: full access for anon
+create policy "Public read quotes"  on quotes for select using (true);
+create policy "Anon insert quotes"  on quotes for insert with check (true);
+create policy "Anon update quotes"  on quotes for update using  (true);
+create policy "Anon delete quotes"  on quotes for delete using  (true);
 
 -- ══════════════════════════════
 --  INDEXES (for fast queries)
@@ -85,7 +87,7 @@ create index idx_items_date_added on items (date_added desc);
 create index idx_items_tag        on items (tag);
 
 -- ══════════════════════════════
---  SITE SETTINGS (viewer password, etc.)
+--  SITE SETTINGS (passphrases, etc.)
 -- ══════════════════════════════
 
 create table if not exists site_settings (
@@ -95,16 +97,10 @@ create table if not exists site_settings (
 
 alter table site_settings enable row level security;
 
--- anyone can read settings (needed to check viewer password hash)
-create policy "Public read settings"  on site_settings for select using (true);
--- only signed-in users can change settings
-create policy "Auth upsert settings"  on site_settings for insert with check (auth.role() = 'authenticated');
-create policy "Auth update settings"  on site_settings for update using  (auth.role() = 'authenticated');
-
--- anyone (even anon) can update the visitor counter
-create policy "Anon update counter" on site_settings for update using (key = 'visit_count');
--- anyone can insert counter if missing
-create policy "Anon insert counter" on site_settings for insert with check (key = 'visit_count');
+-- full access for anon (auth enforced at app level)
+create policy "Public read settings"   on site_settings for select using (true);
+create policy "Anon insert settings"   on site_settings for insert with check (true);
+create policy "Anon update settings"   on site_settings for update using  (true);
 
 -- atomic visitor counter increment (callable by anon)
 create or replace function increment_visits()
@@ -119,9 +115,10 @@ begin
 end;
 $$ language plpgsql security definer;
 
--- seed data
+-- seed data (default viewer passphrase: "barbu", admin passphrase: "efuu")
 insert into site_settings (key, value) values
   ('viewer_pw_hash', 'e92a2dd9c7ea5d79789f9806cfa4c7c35a3f65496fdb938fa6d0e8c5996f3354'),
+  ('admin_pw_hash',  '05340f7b77d45d8df98d8559a62d0af0af6de18f40605d1d3af1c59f480df55c'),
   ('visit_count', '0'),
   ('block_positions', '{}'),
   ('block_expanded', '{}')
