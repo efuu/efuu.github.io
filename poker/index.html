@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poker Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: 28px; color: #00d4aa; text-align: center; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: #6b6b8a; font-size: 13px; margin-bottom: 24px; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #00d4aa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 24px;
+      font-weight: 800;
+    }
+    .stat-val.pos { color: #00d4aa; }
+    .stat-val.neg { color: #ff4444; }
+    .stat-val.neutral { color: #e0e0e0; }
+    .stat-label {
+      font-size: 10px;
+      color: #6b6b8a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+    canvas {
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+      background: #0d1117;
+    }
+    .import-area {
+      border: 2px dashed #30363d;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .import-area:hover { border-color: #00d4aa; }
+    .import-area.dragover { border-color: #00d4aa; background: rgba(0,212,170,0.05); }
+    .import-icon { font-size: 36px; margin-bottom: 8px; }
+    .import-text { color: #6b6b8a; font-size: 13px; }
+    .import-text a { color: #00d4aa; cursor: pointer; text-decoration: underline; }
+    textarea.paste-box {
+      width: 100%;
+      min-height: 80px;
+      margin-top: 12px;
+      padding: 10px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11px;
+      resize: vertical;
+    }
+    textarea.paste-box:focus { outline: none; border-color: #00d4aa; }
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-primary { background: #00d4aa; color: #0d1117; }
+    .btn-primary:hover { background: #00b894; }
+    .btn-outline { background: transparent; border: 1px solid #30363d; color: #e0e0e0; }
+    .btn-outline:hover { border-color: #00d4aa; color: #00d4aa; }
+    .btn-row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+    table.sessions {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.sessions th {
+      background: #0d1117;
+      color: #00d4aa;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 6px;
+      text-align: center;
+      border-bottom: 2px solid #30363d;
+    }
+    table.sessions th:first-child { text-align: left; }
+    table.sessions td {
+      padding: 8px 6px;
+      text-align: center;
+      border-bottom: 1px solid #21262d;
+    }
+    table.sessions td:first-child { text-align: left; }
+    table.sessions tr:hover td { background: rgba(0,212,170,0.03); }
+    .pos { color: #00d4aa; font-weight: 600; }
+    .neg { color: #ff4444; font-weight: 600; }
+    .hidden { display: none; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #00d4aa;
+      color: #0d1117;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      display: none;
+      z-index: 999;
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      canvas { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>♠ Poker Dashboard</h1>
+    <div class="subtitle">Track your winrate, profit, and session history</div>
+
+    <!-- Import Section -->
+    <div class="card" id="importCard">
+      <div class="card-title">Import Session Data</div>
+      <div class="import-area" id="dropZone">
+        <div class="import-icon">📋</div>
+        <div class="import-text">
+          <strong>Paste JSON data</strong> from the extension below,<br>
+          or <a id="fileLink">upload a JSON file</a>
+        </div>
+        <input type="file" id="fileInput" accept=".json" style="display:none" />
+      </div>
+      <textarea class="paste-box" id="pasteBox" placeholder='Paste your session data JSON here... (click "📋 Copy Data" in the extension popup)'></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="loadDataBtn">Load Data</button>
+        <button class="btn btn-outline" id="loadSampleBtn">Load Sample Data</button>
+      </div>
+    </div>
+
+    <!-- Dashboard (hidden until data loaded) -->
+    <div id="dashboard" class="hidden">
+      <!-- Summary Stats -->
+      <div class="stats-row" id="summaryStats"></div>
+
+      <!-- Profit Chart -->
+      <div class="card">
+        <div class="card-title">Cumulative Profit</div>
+        <canvas id="profitChart"></canvas>
+      </div>
+
+      <!-- Session History -->
+      <div class="card">
+        <div class="card-title">Session History</div>
+        <div id="sessionTable"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" id="clearBtn">Clear Data</button>
+        <button class="btn btn-outline" id="exportBtn">Download JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let sessions = [];
+
+    // ── Data loading ──
+    function loadFromJSON(json) {
+      try {
+        const data = JSON.parse(json);
+        if (!Array.isArray(data)) throw new Error("Expected an array");
+        sessions = data.sort((a, b) => a.startTime - b.startTime);
+        localStorage.setItem("pokerSessions", json);
+        renderDashboard();
+        showToast(`Loaded ${sessions.length} sessions`);
+      } catch (e) {
+        showToast("Invalid JSON: " + e.message);
+      }
+    }
+
+    // Try loading from localStorage on page load
+    const saved = localStorage.getItem("pokerSessions");
+    if (saved) {
+      try {
+        sessions = JSON.parse(saved).sort((a, b) => a.startTime - b.startTime);
+        renderDashboard();
+      } catch (e) {}
+    }
+
+    document.getElementById("loadDataBtn").addEventListener("click", () => {
+      const json = document.getElementById("pasteBox").value.trim();
+      if (!json) { showToast("Paste your session data first"); return; }
+      loadFromJSON(json);
+    });
+
+    document.getElementById("fileLink").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("fileInput").click();
+    });
+
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => loadFromJSON(reader.result);
+      reader.readAsText(file);
+    });
+
+    // Drag & drop
+    const dropZone = document.getElementById("dropZone");
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => loadFromJSON(reader.result);
+        reader.readAsText(file);
+      }
+    });
+
+    document.getElementById("loadSampleBtn").addEventListener("click", () => {
+      const sample = generateSampleData();
+      loadFromJSON(JSON.stringify(sample));
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      sessions = [];
+      localStorage.removeItem("pokerSessions");
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("importCard").classList.remove("hidden");
+      showToast("Data cleared");
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "poker_sessions.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ── Render ──
+    function renderDashboard() {
+      document.getElementById("importCard").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+      renderSummary();
+      renderChart();
+      renderTable();
+    }
+
+    function renderSummary() {
+      const container = document.getElementById("summaryStats");
+      const totalSessions = sessions.length;
+      const totalProfit = sessions.reduce((sum, s) => sum + s.profit, 0);
+      const totalBuyin = sessions.reduce((sum, s) => sum + s.buyin, 0);
+      const totalHours = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 3600000;
+      const hourlyRate = totalHours > 0 ? totalProfit / totalHours : 0;
+      const winSessions = sessions.filter(s => s.profit > 0).length;
+      const winRate = totalSessions > 0 ? (winSessions / totalSessions * 100) : 0;
+      const roi = totalBuyin > 0 ? (totalProfit / totalBuyin * 100) : 0;
+      const biggestWin = sessions.length > 0 ? Math.max(...sessions.map(s => s.profit)) : 0;
+      const biggestLoss = sessions.length > 0 ? Math.min(...sessions.map(s => s.profit)) : 0;
+
+      container.innerHTML = `
+        <div class="stat-box"><div class="stat-val neutral">${totalSessions}</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-box"><div class="stat-val ${totalProfit >= 0 ? 'pos' : 'neg'}">${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}</div><div class="stat-label">Net Profit</div></div>
+        <div class="stat-box"><div class="stat-val ${hourlyRate >= 0 ? 'pos' : 'neg'}">${hourlyRate >= 0 ? '+' : ''}$${hourlyRate.toFixed(2)}</div><div class="stat-label">$/Hour</div></div>
+        <div class="stat-box"><div class="stat-val ${winRate >= 50 ? 'pos' : 'neg'}">${winRate.toFixed(0)}%</div><div class="stat-label">Win Rate</div></div>
+        <div class="stat-box"><div class="stat-val ${roi >= 0 ? 'pos' : 'neg'}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</div><div class="stat-label">ROI</div></div>
+        <div class="stat-box"><div class="stat-val pos">+$${biggestWin.toFixed(2)}</div><div class="stat-label">Best Session</div></div>
+        <div class="stat-box"><div class="stat-val neg">$${biggestLoss.toFixed(2)}</div><div class="stat-label">Worst Session</div></div>
+        <div class="stat-box"><div class="stat-val neutral">${totalHours.toFixed(1)}h</div><div class="stat-label">Total Hours</div></div>
+      `;
+    }
+
+    function renderChart() {
+      const canvas = document.getElementById("profitChart");
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      const W = rect.width;
+      const H = rect.height;
+
+      // Calculate cumulative profit
+      let cumulative = [0];
+      let labels = ["Start"];
+      sessions.forEach(s => {
+        cumulative.push(cumulative[cumulative.length - 1] + s.profit);
+        const d = new Date(s.startTime);
+        labels.push(`${d.getMonth()+1}/${d.getDate()}`);
+      });
+
+      const maxVal = Math.max(...cumulative, 1);
+      const minVal = Math.min(...cumulative, -1);
+      const range = maxVal - minVal || 1;
+      const pad = { top: 30, right: 20, bottom: 40, left: 60 };
+      const chartW = W - pad.left - pad.right;
+      const chartH = H - pad.top - pad.bottom;
+
+      // Background
+      ctx.fillStyle = "#0d1117";
+      ctx.fillRect(0, 0, W, H);
+
+      // Grid lines
+      const gridLines = 5;
+      ctx.strokeStyle = "#21262d";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#6b6b8a";
+      ctx.font = "10px -apple-system, sans-serif";
+      ctx.textAlign = "right";
+      for (let i = 0; i <= gridLines; i++) {
+        const y = pad.top + (chartH * i / gridLines);
+        const val = maxVal - (range * i / gridLines);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(W - pad.right, y);
+        ctx.stroke();
+        ctx.fillText("$" + val.toFixed(0), pad.left - 8, y + 4);
+      }
+
+      // Zero line
+      const zeroY = pad.top + (maxVal / range) * chartH;
+      ctx.strokeStyle = "#30363d";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, zeroY);
+      ctx.lineTo(W - pad.right, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Profit line
+      if (cumulative.length > 1) {
+        ctx.beginPath();
+        for (let i = 0; i < cumulative.length; i++) {
+          const x = pad.left + (i / (cumulative.length - 1)) * chartW;
+          const y = pad.top + ((maxVal - cumulative[i]) / range) * chartH;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = "#00d4aa";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Gradient fill
+        const lastX = pad.left + chartW;
+        const lastY = pad.top + ((maxVal - cumulative[cumulative.length - 1]) / range) * chartH;
+        ctx.lineTo(lastX, zeroY);
+        ctx.lineTo(pad.left, zeroY);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+        grad.addColorStop(0, "rgba(0, 212, 170, 0.15)");
+        grad.addColorStop(1, "rgba(0, 212, 170, 0)");
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Dots
+        for (let i = 0; i < cumulative.length; i++) {
+          const x = pad.left + (i / (cumulative.length - 1)) * chartW;
+          const y = pad.top + ((maxVal - cumulative[i]) / range) * chartH;
+          ctx.beginPath();
+          ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = cumulative[i] >= 0 ? "#00d4aa" : "#ff4444";
+          ctx.fill();
+          ctx.strokeStyle = "#0d1117";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // X-axis labels (show max 10)
+        ctx.fillStyle = "#6b6b8a";
+        ctx.font = "9px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        const step = Math.max(1, Math.floor(labels.length / 10));
+        for (let i = 0; i < labels.length; i += step) {
+          const x = pad.left + (i / (cumulative.length - 1)) * chartW;
+          ctx.fillText(labels[i], x, H - pad.bottom + 16);
+        }
+      }
+    }
+
+    function renderTable() {
+      const container = document.getElementById("sessionTable");
+      const reversed = [...sessions].reverse();
+
+      let html = `<table class="sessions"><thead><tr>
+        <th>Date</th><th>Game</th><th>Buy-in</th><th>Cash-out</th><th>Profit/Loss</th><th>Duration</th>
+      </tr></thead><tbody>`;
+      for (const s of reversed) {
+        const d = new Date(s.startTime);
+        const date = d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        const dur = s.duration ? formatTime(s.duration) : "—";
+        const cls = s.profit >= 0 ? "pos" : "neg";
+        const sign = s.profit >= 0 ? "+" : "";
+        html += `<tr>
+          <td>${date}</td>
+          <td>${s.gameName || "—"}</td>
+          <td>$${s.buyin.toFixed(2)}</td>
+          <td>$${s.cashout.toFixed(2)}</td>
+          <td class="${cls}">${sign}$${s.profit.toFixed(2)}</td>
+          <td>${dur}</td>
+        </tr>`;
+      }
+      html += "</tbody></table>";
+      container.innerHTML = html;
+    }
+
+    function formatTime(ms) {
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
+    }
+
+    function generateSampleData() {
+      const games = ["Friday Night", "Weekend Game", "Micro Stakes", "Home Game", "Study Session"];
+      const data = [];
+      let date = Date.now() - 30 * 24 * 3600000;
+      for (let i = 0; i < 15; i++) {
+        date += (1 + Math.random() * 3) * 24 * 3600000;
+        const buyin = [10, 20, 25, 50][Math.floor(Math.random() * 4)];
+        const cashout = buyin + (Math.random() - 0.45) * buyin * 3;
+        data.push({
+          id: Date.now().toString(36) + i,
+          gameName: games[Math.floor(Math.random() * games.length)],
+          startTime: date,
+          endTime: date + (1 + Math.random() * 4) * 3600000,
+          duration: (1 + Math.random() * 4) * 3600000,
+          buyin: buyin,
+          cashout: Math.max(0, parseFloat(cashout.toFixed(2))),
+          profit: parseFloat((cashout - buyin).toFixed(2)),
+          addons: [],
+        });
+      }
+      return data;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 2000);
+    }
+
+    // Handle window resize for chart
+    window.addEventListener("resize", () => {
+      if (sessions.length > 0) renderChart();
+    });
+  </script>
+</body>
+</html>
