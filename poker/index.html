@@ -180,7 +180,7 @@
     }
 
     document.getElementById('loginBtn').addEventListener('click', tryLogin);
-    document.getElementById('pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+    document.getElementById('pwInput').addEventListener('keyup', (e) => { if (e.key === 'Enter') { e.preventDefault(); tryLogin(); } });
 
     async function tryLogin() {
       const pw = document.getElementById('pwInput').value;

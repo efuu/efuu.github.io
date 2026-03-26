@@ -42,14 +42,13 @@ create policy "Anon delete poker_sessions"  on poker_sessions for delete using (
 create index idx_poker_start_time on poker_sessions (start_time desc);
 
 -- ══════════════════════════════
---  PASSPHRASE (default: "poker")
+--  PASSPHRASE (default: "sixseven")
 -- ══════════════════════════════
--- SHA-256 of "poker" = 0dc979da11c452ef2...
 -- Change this via the dashboard settings or update directly.
 
 insert into site_settings (key, value) values
-  ('poker_pw_hash', 'fba2eac3ee47ff78190eab8acfc21686955e4aed6fd45a5524ad84b537aeeb23')
+  ('poker_pw_hash', 'ed227bb0d191d168545bec592e8b9c1199ef4ffa122a7395ededa0cf888dc09f')
 on conflict (key) do nothing;
 
 -- NOTE: The actual hash will be set on first login via the dashboard.
--- Default passphrase is "poker" — you can change it after logging in.
+-- Default passphrase is "sixseven" — you can change it after logging in.
