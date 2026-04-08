@@ -168,9 +168,12 @@ document.addEventListener('touchend',()=>{targetTouch=0},{passive:true});
 // ── EYES Canvas 2D ──
 const eyeCanvas=document.getElementById('eyes');
 const ectx=eyeCanvas.getContext('2d');
-function resizeEyes(){eyeCanvas.width=W;eyeCanvas.height=H}
+function resizeEyes(){
+  eyeCanvas.width=W*dpr;eyeCanvas.height=H*dpr;
+  ectx.scale(dpr,dpr);
+}
 resizeEyes();
-// eyeY is const, recalculate not needed since frame reads H directly
+window.addEventListener('resize',()=>{W=innerWidth;H=innerHeight;resizeEyes()});
 
 const eyePositions=[0.25,0.50,0.75];
 function getEyeY(){ return H - 80; } // 80px from bottom

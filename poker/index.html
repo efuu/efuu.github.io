@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Poker Dashboard</title>
+  <title>Ledger</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -117,8 +117,8 @@
   <!-- Login Screen -->
   <div id="loginScreen" class="login-wrap">
     <div class="login-box">
-      <h1>♠ Poker</h1>
-      <div class="subtitle">Enter passphrase to view dashboard</div>
+      <h1>Ledger</h1>
+      <div class="subtitle">Enter passphrase to continue</div>
       <input type="password" id="pwInput" class="login-input" placeholder="passphrase" autofocus />
       <button class="login-btn" id="loginBtn">Unlock</button>
     </div>
@@ -127,7 +127,7 @@
   <!-- Dashboard (hidden until auth) -->
   <div id="app" class="container hidden">
     <div class="header-bar">
-      <div><h1 style="text-align:left;font-size:22px">♠ Poker Dashboard</h1></div>
+      <div><h1 style="text-align:left;font-size:22px">Ledger</h1></div>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="logout-btn" id="refreshBtn">↻ Refresh</button>
         <button class="logout-btn" id="logoutBtn">Logout</button>
@@ -393,7 +393,7 @@
     document.getElementById('exportBtn').addEventListener('click', () => {
       const blob=new Blob([JSON.stringify(sessions,null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob); const a=document.createElement('a');
-      a.href=url; a.download='poker_sessions.json'; a.click(); URL.revokeObjectURL(url);
+      a.href=url; a.download='sessions.json'; a.click(); URL.revokeObjectURL(url);
     });
 
     function showToast(msg){
