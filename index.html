@@ -6,473 +6,251 @@
 <title>efuu</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-  background:#000;color:#fff;font-family:'Courier New',monospace;
-  height:100vh;height:100dvh;overflow:hidden;cursor:none;user-select:none;
-  -webkit-tap-highlight-color:transparent;
-}
+html,body{width:100%;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+body{background:#030810;font-family:system-ui,-apple-system,sans-serif}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 
-canvas#noise{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.035}
-
-.grid{
-  position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;
-  background:
-    linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
-  background-size:60px 60px;pointer-events:none;
+/* Nav — three tap zones spanning the screen */
+.nav{
+  position:fixed;z-index:2;top:0;left:0;width:100%;height:100%;
+  display:flex;pointer-events:none;
 }
-
-.glyph{
-  position:fixed;z-index:2;font-size:11px;color:rgba(255,255,255,0.05);
-  pointer-events:none;animation:drift 20s linear infinite;
+.nav a{
+  pointer-events:all;text-decoration:none;
+  flex:1;display:flex;align-items:flex-end;justify-content:center;
+  cursor:pointer;position:relative;
 }
-@keyframes drift{
-  0%{transform:translateY(0) rotate(0deg);opacity:0}
-  10%{opacity:0.05}90%{opacity:0.05}
-  100%{transform:translateY(-100vh) rotate(360deg);opacity:0}
-}
+.pip{display:none}
 
-.scanline{
-  position:fixed;top:0;left:0;width:100%;height:2px;z-index:99;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.025),transparent);
-  animation:scan 8s linear infinite;pointer-events:none;
-}
-@keyframes scan{0%{top:-2px}100%{top:100vh}}
-
-.center{
-  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-
-/* ── PORTALS ── */
-.portals{display:flex;gap:100px;align-items:center}
-
-.portal{
-  position:relative;width:160px;height:160px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:none;text-decoration:none;
-  -webkit-tap-highlight-color:transparent;
-}
-
-.portal-ring{
-  position:absolute;width:100%;height:100%;
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:50%;transition:all 1.2s cubic-bezier(0.16,1,0.3,1);
-}
-.portal.active .portal-ring,.portal:hover .portal-ring{
-  border-color:rgba(255,255,255,0.35);
-  box-shadow:0 0 80px rgba(255,255,255,0.05),inset 0 0 60px rgba(255,255,255,0.03);
-  transform:scale(1.08);
-}
-.portal.active .ring-2,.portal:hover .ring-2{transform:scale(0.92) rotate(45deg)!important;border-color:rgba(255,255,255,0.2)}
-.portal.active .ring-3,.portal:hover .ring-3{transform:scale(1.18) rotate(-30deg)!important;border-color:rgba(255,255,255,0.12)}
-.ring-2{transition:all 1.4s cubic-bezier(0.16,1,0.3,1)}
-.ring-3{transition:all 1s cubic-bezier(0.16,1,0.3,1)}
-
-/* ── PARTICLE CANVAS (inside each portal) ── */
-canvas.particles{
-  position:absolute;width:100%;height:100%;z-index:2;
-  pointer-events:none;border-radius:50%;
-}
-
-/* ── HOTKEY HINT ── */
-.hotkey{
-  position:absolute;bottom:-28px;font-size:9px;letter-spacing:3px;
-  color:rgba(255,255,255,0);transition:all 0.6s ease;
-  z-index:3;
-}
-.portal.active .hotkey,.portal:hover .hotkey{color:rgba(255,255,255,0.15)}
-
-/* ── DIVIDER ── */
-.divider{width:1px;height:60px;background:linear-gradient(transparent,rgba(255,255,255,0.05),transparent)}
-
-/* ── CURSOR ── */
-.cursor{
-  position:fixed;width:12px;height:12px;z-index:9999;
-  pointer-events:none;mix-blend-mode:difference;
-}
-.cursor-dot{width:4px;height:4px;background:#fff;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
-.cursor-ring{
-  width:12px;height:12px;border:1px solid rgba(255,255,255,0.4);
-  position:absolute;top:0;left:0;transition:all 0.3s ease;border-radius:50%;
-}
-body.hovering .cursor-ring{width:36px;height:36px;top:-12px;left:-12px;border-color:rgba(255,255,255,0.6)}
-
-/* ── CORNER MARKS ── */
-.corner{position:fixed;z-index:5;font-size:7px;color:rgba(255,255,255,0.05);letter-spacing:2px}
-.corner.tl{top:24px;left:24px}
-.corner.tr{top:24px;right:24px}
-.corner.bl{bottom:24px;left:24px}
-.corner.br{bottom:24px;right:24px;text-align:right}
-
-/* ── RIPPLE ── */
-.ripple{
-  position:fixed;border:1px solid rgba(255,255,255,0.12);border-radius:50%;
-  pointer-events:none;z-index:98;animation:rippleOut 0.8s ease-out forwards;
-}
-@keyframes rippleOut{
-  0%{width:0;height:0;opacity:0.3}
-  100%{width:120px;height:120px;opacity:0;margin-top:-60px;margin-left:-60px}
-}
-
-/* ── TRANSITION ── */
 .transition-overlay{
   position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;
-  background:#000;opacity:0;pointer-events:none;transition:opacity 0.6s ease;
+  background:#030810;opacity:0;pointer-events:none;transition:opacity 0.6s ease;
 }
 .transition-overlay.active{opacity:1;pointer-events:all}
 
-/* ── KONAMI FLASH ── */
-@keyframes konamiFlash{
-  0%{background:rgba(255,255,255,0)}
-  50%{background:rgba(255,255,255,0.04)}
-  100%{background:rgba(255,255,255,0)}
-}
-.konami-flash{animation:konamiFlash 0.6s ease}
-
-/* ── MOBILE ── */
-@media(max-width:600px){
-  .portals{flex-direction:column;gap:50px}
-  .divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
-  .portal{width:130px;height:130px}
-  .cursor{display:none}
-  body{cursor:default}
-  .portal{cursor:pointer}
-  .corner{font-size:6px}
-  .corner.tl,.corner.tr{top:16px}
-  .corner.bl,.corner.br{bottom:16px}
-  .corner.tl,.corner.bl{left:16px}
-  .corner.tr,.corner.br{right:16px}
-  .hotkey{display:none}
-}
-@media(max-width:360px){
-  .portal{width:110px;height:110px}
-  .portals{gap:40px}
-}
-@media(hover:none){
-  .portal:active .portal-ring{
-    border-color:rgba(255,255,255,0.35);
-    box-shadow:0 0 80px rgba(255,255,255,0.05),inset 0 0 60px rgba(255,255,255,0.03);
-    transform:scale(1.08);
-  }
-}
+@media(max-width:500px){.nav a{padding-bottom:28px}}
 </style>
 </head>
 <body>
 
-<canvas id="noise"></canvas>
-<div class="grid"></div>
-<div class="scanline"></div>
+<canvas id="bg"></canvas>
+<canvas id="eyes" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none"></canvas>
 
-<div class="corner tl" id="time-display">00:00:00</div>
-<div class="corner tr" id="coord-display"></div>
-<div class="corner bl" id="fps-display"></div>
-<div class="corner br">efuu</div>
-
-<div class="center">
-  <div class="portals">
-    <a class="portal" id="p-list" href="list.html" onclick="navigate(event,'list.html')">
-      <div class="portal-ring"></div>
-      <div class="portal-ring ring-2"></div>
-      <div class="portal-ring ring-3"></div>
-      <canvas class="particles" id="particles-0"></canvas>
-      <div class="hotkey">[1]</div>
-    </a>
-
-    <div class="divider"></div>
-
-    <a class="portal" id="p-menu" href="harvardmenu/" onclick="navigate(event,'harvardmenu/')">
-      <div class="portal-ring"></div>
-      <div class="portal-ring ring-2"></div>
-      <div class="portal-ring ring-3"></div>
-      <canvas class="particles" id="particles-1"></canvas>
-      <div class="hotkey">[2]</div>
-    </a>
-  </div>
-</div>
-
+<nav class="nav">
+  <a href="list.html" onclick="go(event,'list.html')"><span class="pip"></span></a>
+  <a href="harvardmenu/" onclick="go(event,'harvardmenu/')"><span class="pip"></span></a>
+  <a href="poker/" onclick="go(event,'poker/')"><span class="pip"></span></a>
+</nav>
 <div class="transition-overlay" id="transition"></div>
-<div class="cursor" id="cursor"><div class="cursor-dot"></div><div class="cursor-ring"></div></div>
 
 <script>
-// ── CONFIG ──
-const URLS=['list.html','harvardmenu/'];
-const portals=[document.getElementById('p-list'),document.getElementById('p-menu')];
-let selected=-1; // keyboard focus index
+function go(e,u){e.preventDefault();document.getElementById('transition').classList.add('active');setTimeout(()=>location.href=u,500)}
 
-// ── CURSOR (desktop) ──
-const cursorEl=document.getElementById('cursor');
-let mx=-100,my=-100,curX=-100,curY=-100;
-const isTouch='ontouchstart'in window;
-if(!isTouch){
-  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-  (function loop(){
-    curX+=(mx-curX)*0.12;curY+=(my-curY)*0.12;
-    cursorEl.style.left=curX-6+'px';cursorEl.style.top=curY-6+'px';
-    requestAnimationFrame(loop);
-  })();
-  portals.forEach(p=>{
-    p.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
-    p.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
-  });
-}else{
-  cursorEl.style.display='none';
+const bgCanvas=document.getElementById('bg');
+const gl=bgCanvas.getContext('webgl',{alpha:false,antialias:false});
+const dpr=Math.min(window.devicePixelRatio,2);
+let W=window.innerWidth,H=window.innerHeight;
+
+function resizeBg(){W=window.innerWidth;H=window.innerHeight;bgCanvas.width=W*dpr;bgCanvas.height=H*dpr;gl.viewport(0,0,bgCanvas.width,bgCanvas.height)}
+resizeBg();window.addEventListener('resize',resizeBg);
+
+const vsrc=`attribute vec2 a;void main(){gl_Position=vec4(a,0,1);}`;
+const fsrc=`
+precision highp float;
+uniform float t;
+uniform vec2 res;
+uniform vec2 mouse;
+uniform float touch;
+
+vec3 mod289(vec3 x){return x-floor(x/289.)*289.;}
+vec2 mod289(vec2 x){return x-floor(x/289.)*289.;}
+vec3 permute(vec3 x){return mod289((x*34.+1.)*x);}
+float snoise(vec2 v){
+  const vec4 C=vec4(.211325,.366025,-.577350,.024390);
+  vec2 i=floor(v+dot(v,C.yy)),x0=v-i+dot(i,C.xx);
+  vec2 i1=x0.x>x0.y?vec2(1,0):vec2(0,1);
+  vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1;
+  i=mod289(i);
+  vec3 p=permute(permute(i.y+vec3(0,i1.y,1.))+i.x+vec3(0,i1.x,1.));
+  vec3 m=max(.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
+  m=m*m*m*m;
+  vec3 x=2.*fract(p*C.www)-1.,h=abs(x)-.5,ox=floor(x+.5),a0=x-ox;
+  m*=1.7928-0.8537*(a0*a0+h*h);
+  vec3 g;g.x=a0.x*x0.x+h.x*x0.y;g.yz=a0.yz*x12.xz+h.yz*x12.yw;
+  return 130.*dot(m,g);
 }
 
-// ── NOISE ──
-const nc=document.getElementById('noise'),nx=nc.getContext('2d');
-function resizeNoise(){nc.width=window.innerWidth/4;nc.height=window.innerHeight/4}
-resizeNoise();window.addEventListener('resize',resizeNoise);
-function drawNoise(){
-  const img=nx.createImageData(nc.width,nc.height);
-  const d=img.data;
-  for(let i=0;i<d.length;i+=8){const v=Math.random()*255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}
-  nx.putImageData(img,0,0);
+float fbm(vec2 p){
+  float f=0.,amp=0.5;
+  for(int i=0;i<5;i++){f+=amp*snoise(p);p*=2.1;amp*=0.5;}
+  return f;
 }
-setInterval(drawNoise,120);
 
-// ── GLYPHS ──
-const glyphs='\u27D0\u25C7\u25C8\u2B21\u2B22\u25B3\u25BD\u2295\u2297\u2298\u229E\u22A1'.split('');
-function spawnGlyph(){
-  const g=document.createElement('div');
-  g.className='glyph';
-  g.textContent=glyphs[Math.random()*glyphs.length|0];
-  g.style.left=Math.random()*100+'%';
-  g.style.top=100+Math.random()*20+'%';
-  const dur=15+Math.random()*25;
-  g.style.animationDuration=dur+'s';
-  g.style.fontSize=8+Math.random()*5+'px';
-  document.body.appendChild(g);
-  setTimeout(()=>g.remove(),dur*1000);
-}
-setInterval(spawnGlyph,1200);
-for(let i=0;i<8;i++)setTimeout(spawnGlyph,i*300);
+void main(){
+  vec2 p=(gl_FragCoord.xy-0.5*res)/min(res.x,res.y);
+  float T=t*0.15;
 
-// ── PARTICLE SYSTEMS (one per portal) ──
-const pSystems=[];
-function initParticles(){
-  portals.forEach((portal,idx)=>{
-    const c=document.getElementById('particles-'+idx);
-    const size=portal.offsetWidth||160;
-    c.width=size;c.height=size;
-    const ctx=c.getContext('2d');
-    const dots=[];
-    const count=idx===0?12:16;
-    for(let i=0;i<count;i++){
-      if(idx===0){
-        // orbiting dots (circular motion)
-        const orbit=15+Math.random()*35;
-        const speed=0.003+Math.random()*0.006;
-        const phase=Math.random()*Math.PI*2;
-        dots.push({type:'orbit',orbit,speed,phase,angle:phase,r:1+Math.random()*1.5});
-      }else{
-        // constellation dots (drift + connect)
-        dots.push({
-          type:'constellation',
-          x:size*0.2+Math.random()*size*0.6,
-          y:size*0.2+Math.random()*size*0.6,
-          vx:(Math.random()-0.5)*0.3,
-          vy:(Math.random()-0.5)*0.3,
-          r:1+Math.random()*1.2
-        });
-      }
+  // Domain warping — moderate, natural texture not forced swirls
+  vec2 q=vec2(fbm(p+T*0.3),fbm(p+vec2(5.2,1.3)+T*0.2));
+  vec2 r=vec2(fbm(p+2.0*q+vec2(1.7,9.2)+T*0.15),fbm(p+2.0*q+vec2(8.3,2.8)+T*0.12));
+  float f=fbm(p+2.0*r);
+
+
+  float pat=length(q)*1.5;
+  float rl=length(r);
+
+  // ── DEEP BLACK BASE ──
+  vec3 col=vec3(0.0,0.0,0.002);
+
+  // ── BLUES — rich marine, not everywhere ──
+  vec3 marine=vec3(0.01,0.07,0.22);
+  vec3 deepBlue=vec3(0.005,0.03,0.10);
+  vec3 brightBlue=vec3(0.03,0.12,0.32);
+
+  col+=deepBlue*smoothstep(0.0,0.6,f)*0.5;
+  col+=marine*smoothstep(0.3,0.8,pat)*0.25;
+  col+=brightBlue*smoothstep(0.1,0.6,sin(f*3.14+T))*0.2;
+  col+=deepBlue*smoothstep(0.3,0.7,rl)*0.2;
+
+  // ── BRIGHT GOLD + WHITE ──
+  vec3 gold=vec3(1.0,0.85,0.1);
+  vec3 brightWhite=vec3(1.0,1.0,0.85);
+
+  // Gold in veins
+  float veins=smoothstep(0.2,0.55,abs(f));
+  col+=gold*veins*0.2;
+
+  // Very bright gold+white highlights
+  float hot=smoothstep(0.55,0.8,f*f+pat*0.3);
+  col+=gold*hot*0.5;
+  col+=brightWhite*hot*0.15;
+
+  // White sparkle in the brightest spots
+  float peak=smoothstep(0.75,0.95,f*f+pat*0.4);
+  col+=brightWhite*peak*0.3;
+
+  // Fine shimmer
+  float shimmer=snoise(p*8.0+T*0.5)*0.5+0.5;
+  col+=gold*shimmer*veins*0.04;
+
+
+  // Vignette
+  col*=max(1.0-0.35*dot(p*0.7,p*0.7),0.0);
+
+  // Grain
+  float grain=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
+  col+=vec3(grain)*0.005;
+
+  // Strong contrast
+  col=pow(max(col,0.0),vec3(0.78));
+
+  gl_FragColor=vec4(col,1);
+}`;
+
+function mkS(s,t){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(sh));return sh}
+const prog=gl.createProgram();
+gl.attachShader(prog,mkS(vsrc,gl.VERTEX_SHADER));
+gl.attachShader(prog,mkS(fsrc,gl.FRAGMENT_SHADER));
+gl.linkProgram(prog);gl.useProgram(prog);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const aa=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(aa);gl.vertexAttribPointer(aa,2,gl.FLOAT,false,0,0);
+const uT=gl.getUniformLocation(prog,'t'),uR=gl.getUniformLocation(prog,'res'),uM=gl.getUniformLocation(prog,'mouse'),uTouch=gl.getUniformLocation(prog,'touch');
+
+let mx=W*dpr*0.5,my=H*dpr*0.5,touching=0,targetTouch=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX*dpr;my=e.clientY*dpr;targetTouch=1});
+document.addEventListener('mouseleave',()=>{targetTouch=0});
+document.addEventListener('touchstart',e=>{const t=e.touches[0];mx=t.clientX*dpr;my=t.clientY*dpr;targetTouch=1},{passive:true});
+document.addEventListener('touchmove',e=>{const t=e.touches[0];mx=t.clientX*dpr;my=t.clientY*dpr},{passive:true});
+document.addEventListener('touchend',()=>{targetTouch=0},{passive:true});
+
+
+// ── EYES Canvas 2D ──
+const eyeCanvas=document.getElementById('eyes');
+const ectx=eyeCanvas.getContext('2d');
+function resizeEyes(){eyeCanvas.width=W;eyeCanvas.height=H}
+resizeEyes();
+// eyeY is const, recalculate not needed since frame reads H directly
+
+const eyePositions=[0.25,0.50,0.75];
+function getEyeY(){ return H - 80; } // 80px from bottom
+
+function drawEyes(time){
+  ectx.clearRect(0,0,W,H);
+  var t=time/1000;
+  var cursorX=mx/dpr, cursorY=my/dpr;
+  var eyeYPos=H-80;
+
+  for(var i=0;i<3;i++){
+    var cx=W*eyePositions[i];
+    var cy=eyeYPos;
+    var ew=28, eh=12;
+
+    // Dark backdrop
+    var g1=ectx.createRadialGradient(cx,cy,ew*0.5,cx,cy,ew*2.5);
+    g1.addColorStop(0,'rgba(0,3,10,0.9)');
+    g1.addColorStop(1,'rgba(0,3,10,0)');
+    ectx.fillStyle=g1;
+    ectx.fillRect(cx-ew*3,cy-ew*3,ew*6,ew*6);
+
+    // Eye shape
+    ectx.beginPath();
+    ectx.moveTo(cx-ew,cy);
+    ectx.quadraticCurveTo(cx,cy-eh*1.8,cx+ew,cy);
+    ectx.quadraticCurveTo(cx,cy+eh*1.8,cx-ew,cy);
+    ectx.closePath();
+    ectx.fillStyle='rgba(5,8,20,0.9)';
+    ectx.fill();
+    ectx.strokeStyle='rgba(255,215,30,0.6)';
+    ectx.lineWidth=1.5;
+    ectx.stroke();
+
+    // Pupil position — track cursor or idle drift
+    var dx=cursorX-cx, dy=cursorY-cy;
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    var px=Math.sin(t*0.8+i*1.5)*5;
+    var py=Math.cos(t*0.6+i*2.0)*2.5;
+    if(dist>1 && touching>0.3){
+      var drift=Math.min(dist*0.04,10);
+      px=dx/dist*drift;
+      py=dy/dist*drift;
     }
-    pSystems.push({ctx,dots,size,idx,hovered:false});
-  });
-}
 
-function drawParticles(time){
-  pSystems.forEach(sys=>{
-    const{ctx,dots,size,idx}=sys;
-    const cx=size/2,cy=size/2,rad=size/2;
-    ctx.clearRect(0,0,size,size);
-    const isHov=portals[idx].matches(':hover')||portals[idx].classList.contains('active');
-    const alpha=isHov?0.6:0.1;
-    const lineAlpha=isHov?0.15:0.03;
+    // Pupil glow
+    var g2=ectx.createRadialGradient(cx+px,cy+py,0,cx+px,cy+py,14);
+    g2.addColorStop(0,'rgba(255,220,50,0.8)');
+    g2.addColorStop(0.3,'rgba(255,200,30,0.25)');
+    g2.addColorStop(1,'rgba(255,200,30,0)');
+    ectx.fillStyle=g2;
+    ectx.beginPath();
+    ectx.arc(cx+px,cy+py,14,0,Math.PI*2);
+    ectx.fill();
 
-    if(idx===0){
-      // orbiting particles
-      dots.forEach(d=>{
-        d.angle+=d.speed*(isHov?2.5:1);
-        const x=cx+Math.cos(d.angle)*d.orbit;
-        const y=cy+Math.sin(d.angle)*d.orbit;
-        ctx.beginPath();ctx.arc(x,y,d.r,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,'+alpha+')';ctx.fill();
-      });
-      // faint orbit rings
-      [20,35,50].forEach(r=>{
-        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-        ctx.strokeStyle='rgba(255,255,255,'+(lineAlpha*0.5)+')';
-        ctx.lineWidth=0.5;ctx.stroke();
-      });
-    }else{
-      // constellation particles
-      dots.forEach(d=>{
-        d.x+=d.vx;d.y+=d.vy;
-        // bounce inside circle
-        const dx=d.x-cx,dy=d.y-cy;
-        if(Math.sqrt(dx*dx+dy*dy)>rad*0.7){
-          d.vx*=-1;d.vy*=-1;
-          d.x+=d.vx*2;d.y+=d.vy*2;
-        }
-        ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,'+alpha+')';ctx.fill();
-      });
-      // connecting lines
-      for(let i=0;i<dots.length;i++){
-        for(let j=i+1;j<dots.length;j++){
-          const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y;
-          const dist=Math.sqrt(dx*dx+dy*dy);
-          if(dist<55){
-            ctx.beginPath();
-            ctx.moveTo(dots[i].x,dots[i].y);
-            ctx.lineTo(dots[j].x,dots[j].y);
-            ctx.strokeStyle='rgba(255,255,255,'+(lineAlpha*(1-dist/55))+')';
-            ctx.lineWidth=0.5;ctx.stroke();
-          }
-        }
-      }
-    }
-  });
-  requestAnimationFrame(drawParticles);
-}
+    // Pupil core
+    ectx.beginPath();
+    ectx.arc(cx+px,cy+py,4.5,0,Math.PI*2);
+    ectx.fillStyle='rgba(255,230,80,0.95)';
+    ectx.fill();
 
-// ── CLOCK ──
-function tick(){
-  const n=new Date();
-  document.getElementById('time-display').textContent=
-    String(n.getHours()).padStart(2,'0')+':'+
-    String(n.getMinutes()).padStart(2,'0')+':'+
-    String(n.getSeconds()).padStart(2,'0');
-}
-setInterval(tick,1000);tick();
-
-// ── COORDS ──
-if(!isTouch){
-  document.addEventListener('mousemove',e=>{
-    const x=((e.clientX/window.innerWidth)*180-90).toFixed(1);
-    const y=((e.clientY/window.innerHeight)*90-45).toFixed(1);
-    document.getElementById('coord-display').textContent=y+'\u00B0 '+x+'\u00B0';
-  });
-}
-
-// ── FPS COUNTER ──
-let frames=0,lastFps=Date.now();
-function countFps(){
-  frames++;
-  const now=Date.now();
-  if(now-lastFps>=1000){
-    document.getElementById('fps-display').textContent=frames+'fps';
-    frames=0;lastFps=now;
+    // Center dot
+    ectx.beginPath();
+    ectx.arc(cx+px,cy+py,1.5,0,Math.PI*2);
+    ectx.fillStyle='rgba(255,255,220,1)';
+    ectx.fill();
   }
-  requestAnimationFrame(countFps);
-}
-countFps();
-
-// ── RIPPLE ──
-function doRipple(x,y){
-  const r=document.createElement('div');
-  r.className='ripple';r.style.left=x+'px';r.style.top=y+'px';
-  document.body.appendChild(r);setTimeout(()=>r.remove(),800);
-}
-document.addEventListener('click',e=>doRipple(e.clientX,e.clientY));
-document.addEventListener('touchstart',e=>{
-  const t=e.touches[0];if(t)doRipple(t.clientX,t.clientY);
-},{passive:true});
-
-// ── NAVIGATE ──
-function navigate(e,url){
-  e.preventDefault();
-  document.getElementById('transition').classList.add('active');
-  setTimeout(()=>window.location.href=url,600);
 }
 
-// ── RING ROTATION ──
-let angle=0;
-(function rot(){
-  angle+=0.12;
-  portals.forEach((p,i)=>{
-    if(p.matches(':hover')||p.classList.contains('active'))return;
-    const rings=p.querySelectorAll('.ring-2,.ring-3');
-    const o=i*180;
-    if(rings[0])rings[0].style.transform='scale(0.85) rotate('+(45+angle+o)+'deg)';
-    if(rings[1])rings[1].style.transform='scale(1.12) rotate('+(-30-angle*0.7+o)+'deg)';
-  });
-  requestAnimationFrame(rot);
-})();
-
-// ── KEYBOARD ──
-function selectPortal(idx){
-  portals.forEach((p,i)=>p.classList.toggle('active',i===idx));
-  selected=idx;
-  document.body.classList.toggle('hovering',idx>=0);
+function frame(ts){
+  touching+=(targetTouch-touching)*0.05;
+  try{
+    gl.uniform1f(uT,ts/1000);gl.uniform2f(uR,bgCanvas.width,bgCanvas.height);
+    gl.uniform2f(uM,mx,my);gl.uniform1f(uTouch,touching);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  }catch(e){}
+  drawEyes(ts);
+  requestAnimationFrame(frame);
 }
-document.addEventListener('keydown',e=>{
-  // direct jump
-  if(e.key==='1'){e.preventDefault();navigate(new Event('x'),URLS[0])}
-  if(e.key==='2'){e.preventDefault();navigate(new Event('x'),URLS[1])}
-  // arrow selection
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){
-    e.preventDefault();selectPortal(0);
-  }
-  if(e.key==='ArrowRight'||e.key==='ArrowDown'){
-    e.preventDefault();selectPortal(1);
-  }
-  // enter to confirm selection
-  if(e.key==='Enter'&&selected>=0){
-    e.preventDefault();navigate(new Event('x'),URLS[selected]);
-  }
-  // tab to toggle between portals
-  if(e.key==='Tab'){
-    e.preventDefault();
-    selectPortal(selected===0?1:0);
-  }
-  // escape to deselect
-  if(e.key==='Escape'){
-    selectPortal(-1);
-  }
-});
-
-// ── KONAMI CODE EASTER EGG ──
-const konami=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-let konamiIdx=0;
-document.addEventListener('keydown',e=>{
-  if(e.key===konami[konamiIdx]){
-    konamiIdx++;
-    if(konamiIdx===konami.length){
-      konamiIdx=0;
-      document.body.classList.add('konami-flash');
-      setTimeout(()=>document.body.classList.remove('konami-flash'),600);
-      // invert colors for 3 seconds
-      document.body.style.filter='invert(1) hue-rotate(180deg)';
-      setTimeout(()=>document.body.style.filter='',3000);
-    }
-  }else{
-    konamiIdx=e.key===konami[0]?1:0;
-  }
-});
-
-// ── MAGNETIC CURSOR PULL (desktop) ──
-if(!isTouch){
-  const PULL_RANGE=200,PULL_STRENGTH=0.15;
-  portals.forEach(p=>{
-    p.addEventListener('mousemove',e=>{
-      const rect=p.getBoundingClientRect();
-      const pcx=rect.left+rect.width/2,pcy=rect.top+rect.height/2;
-      const dx=pcx-e.clientX,dy=pcy-e.clientY;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<PULL_RANGE&&dist>0){
-        const force=(1-dist/PULL_RANGE)*PULL_STRENGTH;
-        mx=e.clientX+dx*force;
-        my=e.clientY+dy*force;
-      }
-    });
-  });
-}
-
-// ── INIT ──
-initParticles();
-requestAnimationFrame(drawParticles);
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
